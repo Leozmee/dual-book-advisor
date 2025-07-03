@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat - Dual Book Advisor{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="chatApp()">
+    <!-- Agent Selection -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Choose Your Agent</h2>
+        <div class="flex space-x-4">
+            <button @click="selectAgent('tech')" 
+                    :class="selectedAgent === 'tech' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
+                    class="px-6 py-3 rounded-lg transition">
+                🖥️ Tech Agent
+            </button>
+            <button @click="selectAgent('literature')" 
+                    :class="selectedAgent === 'literature' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'"
+                    class="px-6 py-3 rounded-lg transition">
+                📖 Literature Agent
+            </button>
+        </div>
+        <div class="mt-4 text-sm text-gray-600" x-show="selectedAgent">
+            <div x-show="selectedAgent === 'tech'">
+                💡 <strong>Tech Agent:</strong> Ask about programming books, data science, software development, and technical topics.
+            </div>
+            <div x-show="selectedAgent === 'literature'">
+                💡 <strong>Literature Agent:</strong> Ask about fiction, classics, poetry, and general literature recommendations.
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="bg-white rounded-lg shadow-lg mb-6" style="height: 500px; overflow-y: auto;" x-ref="chatContainer">
+        <div class="p-6">
+            <div class="space-y-4" x-show="messages.length === 0">
+                <div class="text-center text-gray-500 py-8">
+                    <div class="text-4xl mb-2">💬</div>
+                    <p>Select an agent and start chatting!</p>
+                    <p class="text-sm mt-2">Try: "I want to learn Python" or "I loved Harry Potter, what's next?"</p>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <template x-for="message in messages" :key="message.id">
+                    <div class="flex" :class="message.sender === 'user' ? 'justify-end' : 'justify-start'">
+                        <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg"
+                             :class="message.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-900'">
+                            <div class="text-sm font-medium mb-1" x-show="message.sender !== 'user'">
+                                <span x-show="selectedAgent === 'tech'">🖥️ Tech Agent</span>
+                                <span x-show="selectedAgent === 'literature'">📖 Literature Agent</span>
+                            </div>
+                            <div x-text="message.content"></div>
+                            <div class="text-xs opacity-75 mt-1" x-text="message.timestamp"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Loading indicator -->
+            <div x-show="isLoading" class="flex justify-start">
+                <div class="bg-gray-200 text-gray-900 px-4 py-2 rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                        <span>Thinking...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Input -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <form @submit.prevent="sendMessage()" class="flex space-x-4">
+            <input type="text" 
+                   x-model="newMessage"
+                   placeholder="Ask for book recommendations..."
+                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   :disabled="!selectedAgent || isLoading">
+            <button type="submit" 
+                    :disabled="!selectedAgent || !newMessage.trim() || isLoading"
+                    class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition">
+                Send
+            </button>
+        </form>
+        <div class="mt-2 text-xs text-gray-500" x-show="!selectedAgent">
+            Please select an agent first
+        </div>
+    </div>
+</div>
+
+<script>
+function chatApp() {
+    return {
+        selectedAgent: '',
+        messages: [],
+        newMessage: '',
+        isLoading: false,
+        
+        init() {
+            // Check URL params for agent selection
+            const urlParams = new URLSearchParams(window.location.search);
+            const agent = urlParams.get('agent');
+            if (agent === 'tech' || agent === 'literature') {
+                this.selectedAgent = agent;
+            }
+        },
+        
+        selectAgent(agent) {
+            this.selectedAgent = agent;
+            this.messages = [];
+            
+            // Add welcome message
+            this.addMessage('agent', this.getWelcomeMessage(agent));
+        },
+        
+        getWelcomeMessage(agent) {
+            if (agent === 'tech') {
+                return "Hi! I'm your Tech Agent 🖥️. I can help you find programming books, data science resources, and technical documentation. What technology are you interested in learning?";
+            } else {
+                return "Hello! I'm your Literature Agent 📖. I love recommending fiction, classics, poetry, and all kinds of literature. What genres or authors do you enjoy?";
+            }
+        },
+        
+        async sendMessage() {
+            if (!this.newMessage.trim() || !this.selectedAgent) return;
+            
+            const userMessage = this.newMessage;
+            this.addMessage('user', userMessage);
+            this.newMessage = '';
+            this.isLoading = true;
+            
+            try {
+                const response = await fetch(`/api/chat/${this.selectedAgent}-agent/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify({
+                        message: userMessage
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.addMessage('agent', data.agent_response.content);
+                } else {
+                    this.addMessage('agent', 'Sorry, I encountered an error. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                this.addMessage('agent', 'Sorry, I cannot connect to the server right now.');
+            } finally {
+                this.isLoading = false;
+            }
+        },
+        
+        addMessage(sender, content) {
+            this.messages.push({
+                id: Date.now(),
+                sender: sender,
+                content: content,
+                timestamp: new Date().toLocaleTimeString()
+            });
+            
+            // Scroll to bottom
+            this.$nextTick(() => {
+                this.$refs.chatContainer.scrollTop = this.$refs.chatContainer.scrollHeight;
+            });
+        },
+        
+        getCSRFToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+    }
+}
+</script>
+{% endblock %}

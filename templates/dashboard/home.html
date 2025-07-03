@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Dual Book Advisor{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Hero Section -->
+    <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">
+                🤖 Dual Book Advisor
+            </h1>
+            <p class="text-xl text-gray-600 mb-6">
+                Get personalized book recommendations from our AI agents
+            </p>
+            <div class="flex justify-center space-x-4">
+                <a href="/chat/" 
+                   class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition">
+                    Start Chatting 💬
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Cards -->
+    <div class="grid md:grid-cols-2 gap-8 mb-8">
+        <!-- Tech Agent -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center">
+                <div class="text-4xl mb-4">🖥️</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">Tech Agent</h3>
+                <p class="text-gray-600 mb-4">
+                    Specialized in programming, data science, and technical books. 
+                    Get recommendations based on your coding interests and skill level.
+                </p>
+                <div class="bg-gray-50 rounded p-3 text-sm">
+                    <strong>Example:</strong> "I want to learn React development"
+                </div>
+                <a href="/chat/?agent=tech" 
+                   class="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Chat with Tech Agent
+                </a>
+            </div>
+        </div>
+
+        <!-- Literature Agent -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center">
+                <div class="text-4xl mb-4">📖</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">Literature Agent</h3>
+                <p class="text-gray-600 mb-4">
+                    Expert in fiction, classics, and general literature. 
+                    Discover your next great read based on your literary tastes.
+                </p>
+                <div class="bg-gray-50 rounded p-3 text-sm">
+                    <strong>Example:</strong> "I loved Murakami, what should I read next?"
+                </div>
+                <a href="/chat/?agent=literature" 
+                   class="inline-block mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                    Chat with Literature Agent
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">📊 Database Statistics</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+                <div class="text-2xl font-bold text-blue-600">{{ stats.tech_books }}</div>
+                <div class="text-sm text-gray-600">Tech Books</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-green-600">{{ stats.literature_books }}</div>
+                <div class="text-sm text-gray-600">Literature Books</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-purple-600">{{ stats.total_users }}</div>
+                <div class="text-sm text-gray-600">Users</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-orange-600">{{ stats.total_conversations }}</div>
+                <div class="text-sm text-gray-600">Conversations</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
