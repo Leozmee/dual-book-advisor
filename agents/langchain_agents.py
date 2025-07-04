@@ -9,7 +9,9 @@ from langchain_core.language_models import BaseLanguageModel
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import HuggingFacePipeline
-
+from langchain.agents.output_parsers import ReActSingleInputOutputParser
+from langchain.agents import AgentExecutor, format_log_to_str
+from langchain.memory import ConversationBufferMemory
 from rags.tech_rag.tech_rag_manager import TechRAGManager
 from rags.literature_rag.literature_rag_manager import LiteratureRAGManager
 
