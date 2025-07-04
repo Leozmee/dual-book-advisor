@@ -10,7 +10,7 @@ SECRET_KEY = 'django-insecure-dual-book-advisor-change-in-production-123456789'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 # Application definition
 DJANGO_APPS = [
@@ -106,8 +106,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Internationalization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'fr-fr'
+TIME_ZONE = 'Europe/Paris'
 USE_I18N = True
 USE_TZ = True
 
@@ -179,15 +179,63 @@ LOGGING = {
 }
 
 # RAG Configuration
+
+# 🚀 CONFIGURATION RAG AMÉLIORÉE (REMPLACE L'ANCIENNE)
 RAG_CONFIG = {
     'embedding_model': 'sentence-transformers/all-MiniLM-L6-v2',
     'chunk_size': 512,
-    'top_k_results': 5,
-    'similarity_threshold': 0.5,
+    'top_k_results': 8,  # ✅ Augmenté pour plus de choix (était 5)
+    'similarity_threshold': 0.25,  # ✅ Réduit pour plus de résultats (était 0.5)
     'tech_data_path': BASE_DIR / 'rags' / 'tech_rag' / 'data',
     'literature_data_path': BASE_DIR / 'rags' / 'literature_rag' / 'data',
     'tech_chroma_path': BASE_DIR / 'rags' / 'tech_rag' / 'chroma_db',
     'literature_chroma_path': BASE_DIR / 'rags' / 'literature_rag' / 'chroma_db',
+    
+    # ✅ NOUVELLES OPTIONS POUR AMÉLIORER LES RECHERCHES
+    'multilingual_queries': True,  # Support français/anglais
+    'query_expansion': True,       # Expansion automatique des requêtes
+    'semantic_boost': True,        # Boost sémantique
+    'fallback_threshold': 0.3,     # Seuil minimal pour éviter les résultats vides
+    'max_results_per_query': 10,   # Maximum de résultats à traiter
+    'use_fuzzy_matching': True,    # Correspondance floue pour noms d'auteurs
+}
+
+# 🌍 DICTIONNAIRE DE TRADUCTION POUR REQUÊTES MULTILINGUES
+QUERY_TRANSLATIONS = {
+    # Auteurs littéraires
+    'tolstoy': 'Leo Tolstoy War Peace Anna Karenina Russian literature classic',
+    'tolstoï': 'Leo Tolstoy War Peace Anna Karenina Russian literature classic',
+    'stephen king': 'Stephen King horror thriller It Shining Carrie Salem',
+    'murakami': 'Haruki Murakami Norwegian Wood Kafka Shore Japanese literature',
+    'victor hugo': 'Victor Hugo Les Misérables Hunchback Notre Dame French classic',
+    'shakespeare': 'William Shakespeare Hamlet Romeo Juliet Macbeth English',
+    'camus': 'Albert Camus Stranger Plague Myth Sisyphus existentialism',
+    'sartre': 'Jean-Paul Sartre Nausea Being Nothingness existentialism',
+    
+    # Genres littéraires
+    'romans': 'novels fiction literature story narrative',
+    'fantasy': 'fantasy magic adventure fiction magical worlds',
+    'science fiction': 'science fiction sci-fi futuristic space technology',
+    'thriller': 'thriller suspense mystery crime psychological',
+    'romance': 'romance love relationship contemporary historical',
+    'policier': 'mystery detective crime investigation police',
+    
+    # Technique
+    'python': 'Python programming language development beginner advanced',
+    'javascript': 'JavaScript web development frontend backend Node.js',
+    'c#': 'C# CSharp .NET Microsoft programming Windows development',
+    'java': 'Java programming language enterprise development Android',
+    'web développement': 'web development HTML CSS JavaScript frontend backend',
+    'machine learning': 'machine learning AI artificial intelligence data science',
+    'data science': 'data science analysis statistics Python R visualization',
+    'développement mobile': 'mobile development Android iOS React Native Flutter',
+    
+    # Intentions
+    'apprendre': 'learn beginner tutorial introduction guide',
+    'débutant': 'beginner introductory basic fundamentals getting started',
+    'avancé': 'advanced expert professional deep dive comprehensive',
+    'recommandation': 'recommendation suggest similar like comparable',
+    'oeuvres principales': 'main works major novels best books masterpieces',
 }
 
 # Agent Configuration
