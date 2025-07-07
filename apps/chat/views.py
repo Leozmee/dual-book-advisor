@@ -438,3 +438,50 @@ class LiteratureAgentChatView(APIView):
                     response += f"⭐ Note: {book.average_rating}/5\n\n"
                 return response
             return "📚 Je suis là pour vous faire découvrir de merveilleux livres!"
+        
+from apps.chat.models import ConversationHistory, Message
+
+class MangaAgentChatView(APIView):
+    permission_classes = []
+    
+    def post(self, request):
+        message = request.data.get('message')
+        if not message:
+            return Response({'error': 'Message is required'}, status=400)
+        
+        from apps.accounts.models import User
+        demo_user, created = User.objects.get_or_create(
+            email='demo@example.com',
+            defaults={'username': 'demo', 'first_name': 'Demo', 'last_name': 'User'}
+        )
+        
+        conversation = ConversationHistory.objects.create(
+            user=demo_user,
+            agent_type='manga',
+            title=f"Manga Chat - {message[:30]}..."
+        )
+        
+        user_msg = Message.objects.create(
+            conversation=conversation,
+            sender='user',
+            content=message
+        )
+        
+        # Utiliser SimpleAgentManager
+        agent_manager = SimpleAgentManager()
+        manga_response = agent_manager.get_manga_recommendations(message, demo_user.id)
+        
+        agent_msg = Message.objects.create(
+            conversation=conversation,
+            sender='agent',
+            content=manga_response,
+            rag_sources="RAG_manga_recommendations"
+        )
+        
+        conversation.save()
+        
+        return Response({
+            'conversation_id': conversation.id,
+            'user_message': MessageSerializer(user_msg).data,
+            'agent_response': MessageSerializer(agent_msg).data
+        })
