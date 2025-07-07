@@ -18,6 +18,12 @@
                     class="px-6 py-3 rounded-lg transition">
                 📖 Literature Agent
             </button>
+             <button @click="selectAgent('manga')" 
+                :class="selectedAgent === 'manga' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'"
+                class="px-6 py-3 rounded-lg transition">
+            🎌 Manga Agent
+            </button>
+
         </div>
         <div class="mt-4 text-sm text-gray-600" x-show="selectedAgent">
             <div x-show="selectedAgent === 'tech'">
@@ -25,6 +31,9 @@
             </div>
             <div x-show="selectedAgent === 'literature'">
                 💡 <strong>Literature Agent:</strong> Ask about fiction, classics, poetry, and general literature recommendations.
+            </div>
+            <div x-show="selectedAgent === 'manga'">
+            💡 <strong>Manga Agent:</strong> Ask about manga, anime recommendations, shounen, seinen, shoujo series.
             </div>
         </div>
     </div>
@@ -100,7 +109,7 @@ function chatApp() {
             // Check URL params for agent selection
             const urlParams = new URLSearchParams(window.location.search);
             const agent = urlParams.get('agent');
-            if (agent === 'tech' || agent === 'literature') {
+            if (agent === 'tech' || agent === 'literature' || agent === 'manga') {  // AJOUTER 'manga'
                 this.selectedAgent = agent;
             }
         },
@@ -116,7 +125,9 @@ function chatApp() {
         getWelcomeMessage(agent) {
             if (agent === 'tech') {
                 return "Hi! I'm your Tech Agent 🖥️. I can help you find programming books, data science resources, and technical documentation. What technology are you interested in learning?";
-            } else {
+            } else if (agent === 'manga') {  // NOUVEAU MESSAGE MANGA
+                return "Konnichiwa! I'm your Manga Agent 🎌. I'm an otaku expert who can recommend manga and anime based on your preferences. What series have you enjoyed or what genre interests you?";
+            } else {  // literature
                 return "Hello! I'm your Literature Agent 📖. I love recommending fiction, classics, poetry, and all kinds of literature. What genres or authors do you enjoy?";
             }
         },
@@ -130,7 +141,17 @@ function chatApp() {
             this.isLoading = true;
             
             try {
-                const response = await fetch(`/api/chat/${this.selectedAgent}-agent/`, {
+                // AJOUTER LA ROUTE MANGA
+                let endpoint;
+                if (this.selectedAgent === 'tech') {
+                    endpoint = '/api/chat/tech-agent/';
+                } else if (this.selectedAgent === 'manga') {
+                    endpoint = '/api/chat/manga-agent/';  // NOUVELLE ROUTE
+                } else {
+                    endpoint = '/api/chat/literature-agent/';
+                }
+                
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

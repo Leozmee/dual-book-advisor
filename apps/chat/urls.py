@@ -11,6 +11,7 @@ urlpatterns = [
     path('conversations/<int:conversation_id>/send/', views.SendMessageView.as_view(), name='send_message'),
     path('tech-agent/', views.TechAgentChatView.as_view(), name='tech_agent_chat'),
     path('literature-agent/', views.LiteratureAgentChatView.as_view(), name='literature_agent_chat'),
+    path('manga-agent/', views.MangaAgentChatView.as_view(), name='manga_agent_chat'),
     
     # LangChain endpoints
     path('langchain/', langchain_views.langchain_chat, name='langchain_chat'),
