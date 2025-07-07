@@ -54,12 +54,18 @@ class OllamaGemmaManager:
         try:
             models_response = self.client.list()
             
-            # Fix: vérifier la structure de la réponse
-            if isinstance(models_response, dict) and 'models' in models_response:
+            # Fix: gérer la structure d'objet Ollama
+            available_models = []
+            if hasattr(models_response, 'models'):
+                # C'est un objet ListResponse avec attribut models
+                for model in models_response.models:
+                    if hasattr(model, 'model'):
+                        available_models.append(model.model)
+                    elif hasattr(model, 'name'):
+                        available_models.append(model.name)
+            elif isinstance(models_response, dict) and 'models' in models_response:
+                # Fallback pour structure dict
                 available_models = [model.get('name', '') for model in models_response['models']]
-            else:
-                # Fallback si la structure est différente
-                available_models = []
             
             if self.model_name not in available_models:
                 logger.warning(f"⚠️ Modèle {self.model_name} non trouvé dans {available_models}")
@@ -191,10 +197,26 @@ Recommandation:"""
             # Obtenir les infos du modèle
             models = self.client.list()
             model_info = None
-            for model in models['models']:
-                if model['name'] == self.model_name:
-                    model_info = model
-                    break
+            available_models = []
+            
+            if hasattr(models, 'models'):
+                # Structure d'objet Ollama
+                for model in models.models:
+                    model_name = getattr(model, 'model', getattr(model, 'name', ''))
+                    available_models.append(model_name)
+                    if model_name == self.model_name:
+                        model_info = {
+                            'size': getattr(model, 'size', 'Unknown'),
+                            'digest': getattr(model, 'digest', 'Unknown'),
+                            'modified_at': str(getattr(model, 'modified_at', 'Unknown'))
+                        }
+            elif isinstance(models, dict) and 'models' in models:
+                # Fallback pour structure dict
+                for model in models['models']:
+                    model_name = model.get('name', '')
+                    available_models.append(model_name)
+                    if model_name == self.model_name:
+                        model_info = model
             
             return {
                 "status": "healthy",
@@ -202,8 +224,8 @@ Recommandation:"""
                 "model": self.model_name,
                 "base_url": self.base_url,
                 "model_size": model_info.get('size', 'Unknown') if model_info else 'Unknown',
-                "test_response": test_response[:100],
-                "available_models": [m['name'] for m in models['models']]
+                "test_response": test_response[:100] if test_response else "No response",
+                "available_models": available_models
             }
             
         except Exception as e:
@@ -218,14 +240,29 @@ Recommandation:"""
         """Obtient les informations du modèle"""
         try:
             models = self.client.list()
-            for model in models['models']:
-                if model['name'] == self.model_name:
-                    return {
-                        "name": model['name'],
-                        "size": model.get('size', 'Unknown'),
-                        "digest": model.get('digest', 'Unknown'),
-                        "modified_at": model.get('modified_at', 'Unknown')
-                    }
+            
+            if hasattr(models, 'models'):
+                # Structure d'objet Ollama
+                for model in models.models:
+                    model_name = getattr(model, 'model', getattr(model, 'name', ''))
+                    if model_name == self.model_name:
+                        return {
+                            "name": model_name,
+                            "size": getattr(model, 'size', 'Unknown'),
+                            "digest": getattr(model, 'digest', 'Unknown'),
+                            "modified_at": str(getattr(model, 'modified_at', 'Unknown'))
+                        }
+            elif isinstance(models, dict) and 'models' in models:
+                # Fallback pour structure dict
+                for model in models['models']:
+                    if model.get('name', '') == self.model_name:
+                        return {
+                            "name": model.get('name', ''),
+                            "size": model.get('size', 'Unknown'),
+                            "digest": model.get('digest', 'Unknown'),
+                            "modified_at": model.get('modified_at', 'Unknown')
+                        }
+            
             return {"error": f"Modèle {self.model_name} non trouvé"}
         except Exception as e:
             return {"error": str(e)}

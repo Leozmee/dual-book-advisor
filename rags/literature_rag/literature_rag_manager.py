@@ -124,8 +124,8 @@ class LiteratureRAGManager:
             # Enrichir la requête avec les préférences utilisateur
             enhanced_query = self._enhance_query(query, user_preferences)
             
-            # Rechercher dans ChromaDB avec un seuil équilibré pour les livres littéraires
-            similarity_threshold = 0.15  # Optimisé
+            # Rechercher dans ChromaDB avec un seuil plus permissif pour plus de résultats
+            similarity_threshold = 0.05  # Plus permissif pour capturer plus de correspondances
             results = self.chroma_manager.search_similar(
                 collection=self.collection,
                 query=enhanced_query,
@@ -152,8 +152,12 @@ class LiteratureRAGManager:
                 }
                 formatted_results.append(result)
             
-            # Filtrer et prioriser les livres populaires et bien notés
-            filtered_results = formatted_results  # Filtrage désactivé
+            # Filtrer et prioriser les livres de qualité (seuils assouplis)
+            filtered_results = self._filter_quality_books_relaxed(formatted_results)
+            
+            # Si pas assez de résultats, prendre tous les résultats
+            if len(filtered_results) < n_results:
+                filtered_results = formatted_results
             
             # Limiter au nombre demandé
             final_results = filtered_results[:n_results]
@@ -193,6 +197,32 @@ class LiteratureRAGManager:
                     if rating >= 4.0:  # Seuil plus élevé pour les livres moins populaires
                         result['quality_score'] = rating * 0.5
                         quality_books.append(result)
+        
+        # Trier par score de qualité puis par similarité
+        quality_books.sort(key=lambda x: (x.get('quality_score', 0), x.get('similarity_score', 0)), reverse=True)
+        
+        return quality_books
+    
+    def _filter_quality_books_relaxed(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Filtre avec des critères de qualité assouplis pour plus de résultats"""
+        if not results:
+            return results
+        
+        quality_books = []
+        
+        for result in results:
+            rating = result.get('average_rating', 0.0)
+            popularity = result.get('popularity_rating', 0.0)
+            ratings_count = result.get('ratings_count', 0)
+            
+            # Critères très assouplis
+            is_decent = rating >= 2.5 or popularity >= 1.0 or ratings_count >= 10
+            
+            if is_decent:
+                # Score de qualité simplifié
+                quality_score = (rating * 0.6) + (popularity * 0.2) + (min(ratings_count / 100, 1.0) * 0.2)
+                result['quality_score'] = quality_score
+                quality_books.append(result)
         
         # Trier par score de qualité puis par similarité
         quality_books.sort(key=lambda x: (x.get('quality_score', 0), x.get('similarity_score', 0)), reverse=True)
@@ -249,14 +279,15 @@ class LiteratureRAGManager:
                 if literary_terms:  # Ignorer les patterns vides (mots à supprimer)
                     extracted_terms.append(literary_terms)
         
-        # Si des termes littéraires sont trouvés, les utiliser
+        # Si des termes littéraires sont trouvés, privilégier les termes enrichis
         if extracted_terms:
+            # Pour éviter les doublons exacts, privilégier les genres/thèmes
             enhanced_query = ' '.join(extracted_terms)
-            # Éviter les doublons exacts du même livre en excluant les titres spécifiques
-            enhanced_query = re.sub(r'\b(harry potter|hunger games|twilight)\b', '', enhanced_query, flags=re.IGNORECASE)
+            # Ajouter des termes de similarité
+            enhanced_query += ' similar books recommendations like comparable fantasy adventure'
         else:
-            # Fallback: si aucun terme littéraire détecté, suggérer des genres populaires
-            enhanced_query = 'fiction contemporary popular bestseller'
+            # Fallback: enrichir avec des termes génériques
+            enhanced_query = f"{query} fiction literature books similar recommendations"
         
         # Ajouter les préférences utilisateur
         if user_preferences:
@@ -309,28 +340,47 @@ class LiteratureRAGManager:
                 n_results=n_recommendations
             )
             
-            # Enrichir avec les données complètes des livres
+            # Enrichir avec les données complètes des livres et filtrer les doublons
             recommendations = []
+            seen_authors = set()
+            seen_series = set()
+            
             for result in results:
                 try:
                     book = LiteratureBook.objects.get(id=result['book_id'])
-                    recommendation = {
-                        'book': {
-                            'id': book.id,
-                            'title': book.title,
-                            'authors': book.authors,
-                            'description': book.description,
-                            'average_rating': float(book.average_rating) if book.average_rating else 0.0,
-                            'published_year': book.published_year,
-                            'categories': book.categories,
-                            'reading_difficulty': book.get_reading_difficulty_display(),
-                            'themes': book.themes,
-                            'thumbnail': book.thumbnail,
-                        },
-                        'similarity_score': result['similarity_score'],
-                        'reason': self._generate_recommendation_reason(book, result, user_preferences)
-                    }
-                    recommendations.append(recommendation)
+                    
+                    # Extraire le premier auteur pour éviter les doublons
+                    main_author = book.authors.split(',')[0].strip().lower()
+                    
+                    # Extraire la série/titre principal (avant les deux-points)
+                    main_title = book.title.split(':')[0].strip().lower()
+                    
+                    # Éviter les doublons du même auteur ou de la même série
+                    if main_author not in seen_authors and main_title not in seen_series:
+                        recommendation = {
+                            'book': {
+                                'id': book.id,
+                                'title': book.title,
+                                'authors': book.authors,
+                                'description': book.description,
+                                'average_rating': float(book.average_rating) if book.average_rating else 0.0,
+                                'published_year': book.published_year,
+                                'categories': book.categories,
+                                'reading_difficulty': book.get_reading_difficulty_display(),
+                                'themes': book.themes,
+                                'thumbnail': book.thumbnail,
+                            },
+                            'similarity_score': result['similarity_score'],
+                            'reason': self._generate_recommendation_reason(book, result, user_preferences)
+                        }
+                        recommendations.append(recommendation)
+                        seen_authors.add(main_author)
+                        seen_series.add(main_title)
+                        
+                        # Limiter le nombre pour éviter trop de traitement
+                        if len(recommendations) >= n_recommendations:
+                            break
+                            
                 except LiteratureBook.DoesNotExist:
                     continue
             

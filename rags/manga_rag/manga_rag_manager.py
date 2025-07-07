@@ -19,7 +19,7 @@ class MangaRAGManager:
     
     def __init__(self):
         self.chroma_path = Path(settings.BASE_DIR) / 'rags' / 'manga_rag' / 'chroma_db'
-        self.data_path = Path(settings.BASE_DIR) / 'rags' / 'literature_rag' / 'data' / 'manga_data.csv'
+        self.data_path = Path(settings.BASE_DIR) / 'rags' / 'manga_rag' / 'data' / 'manga_data.csv'
         self.collection_name = "manga_collection"
         self.chroma_manager = ChromaDBManager(str(self.chroma_path))
         self.collection = None
@@ -198,8 +198,8 @@ class MangaRAGManager:
             # Enrichir la requête pour les mangas
             enhanced_query = self._enhance_manga_query(query)
             
-            # Recherche dans ChromaDB avec seuil adapté aux mangas
-            similarity_threshold = 0.3  # Seuil plus permissif pour les mangas
+            # Recherche dans ChromaDB avec seuil très permissif pour les mangas
+            similarity_threshold = 0.1  # Seuil très permissif pour capturer plus de mangas
             results = self.chroma_manager.search_similar(
                 collection=self.collection,
                 query=enhanced_query,
@@ -286,20 +286,24 @@ class MangaRAGManager:
             r'\b(school)\b': 'school student uniform club friendship youth romance',
         }
         
-        # Recherche de correspondances
+        # Recherche de correspondances et enrichissement
+        found_match = False
         for pattern, expansion in manga_mappings.items():
             if re.search(pattern, query_lower, re.IGNORECASE):
                 enhanced_parts.append(expansion)
+                found_match = True
                 break  # Prendre la première correspondance principale
         
-        # Ajouter des termes génériques manga
-        enhanced_parts.append('manga anime Japanese comic otaku')
+        # Si aucune correspondance spécifique, ajouter des termes génériques
+        if not found_match:
+            enhanced_parts.append('manga anime Japanese comic otaku')
         
         # Si c'est une requête de similarité (comme, similaire)
         if any(word in query_lower for word in ['comme', 'similar', 'similaire', 'aimé', 'like']):
             enhanced_parts.append('similar recommendation suggest same genre style')
         
-        return ' '.join(enhanced_parts)
+        # Garder la requête originale + enrichissements
+        return f"{query} {' '.join(enhanced_parts)}"
     
     def get_manga_recommendations(self, user_id: int, query: str, n_recommendations: int = 3) -> List[Dict[str, Any]]:
         """Génère des recommandations de manga personnalisées"""
