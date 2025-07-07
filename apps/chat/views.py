@@ -1,3 +1,4 @@
+from rags.tech_rag.tech_rag_manager import TechRAGManager
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -403,44 +404,30 @@ class LiteratureAgentChatView(APIView):
             'agent_response': MessageSerializer(agent_msg).data
         })
     def _get_literature_recommendation(self, message):
-        """Obtenir des recommandations littéraires intelligentes avec RAG"""
+        """Obtenir des recommandations littéraires intelligentes avec notre SimpleAgentManager"""
         try:
             start_time = time.time()
-            literature_rag = LiteratureRAGManager()
+            
+            # Utiliser notre SimpleAgentManager avec la nouvelle logique
+            agent_manager = SimpleAgentManager()
             
             # Utiliser l'utilisateur demo par défaut
             from apps.accounts.models import User
             demo_user = User.objects.get(email='demo@example.com')
             
-            # Obtenir des recommandations basées sur le RAG
-            recommendations = literature_rag.get_book_recommendations(
-                user_id=demo_user.id,
+            # Obtenir des recommandations avec la nouvelle logique intelligente
+            response = agent_manager.get_literature_recommendations(
                 query=message,
-                n_recommendations=3
+                user_id=demo_user.id
             )
             
             processing_time = time.time() - start_time
+            logger.info(f"Literature recommendation completed in {processing_time:.2f}s")
             
-            if recommendations:
-                response = "📚 Mes suggestions littéraires personnalisées:\n\n"
-                
-                for i, rec in enumerate(recommendations, 1):
-                    book = rec['book']
-                    response += f"{i}. **{book['title']}** de {book['authors']}\n"
-                    response += f"   ⭐ Note: {book['average_rating']}/5"
-                    if book['published_year']:
-                        response += f" | 📅 {book['published_year']}"
-                    response += f"\n   📊 Pertinence: {rec['similarity_score']:.1%}\n"
-                    response += f"   💡 {rec['reason']}\n"
-                    response += f"   📖 {book['description'][:120]}...\n\n"
-                
-                response += f"\n⚡ Recherche sémantique - {processing_time:.2f}s"
-                return response
-            else:
-                return "📚 Je n'ai pas trouvé de livres correspondant exactement à votre demande. Parlez-moi des genres, auteurs ou ambiances qui vous plaisent!"
+            return response
                 
         except Exception as e:
-            logger.error(f"Erreur RAG littéraire: {e}")
+            logger.error(f"Erreur dans SimpleAgentManager: {e}")
             # Fallback vers l'ancienne méthode en cas d'erreur
             from apps.books.models import LiteratureBook
             books = LiteratureBook.objects.filter(average_rating__gte=4.0).order_by('?')[:2]
