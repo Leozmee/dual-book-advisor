@@ -125,11 +125,11 @@ class LiteratureRAGManager:
             enhanced_query = self._enhance_query(query, user_preferences)
             
             # Rechercher dans ChromaDB avec un seuil équilibré pour les livres littéraires
-            similarity_threshold = 0.25  # Seuil légèrement augmenté + filtrage qualité
+            similarity_threshold = 0.15  # Optimisé
             results = self.chroma_manager.search_similar(
                 collection=self.collection,
                 query=enhanced_query,
-                n_results=n_results * 2,  # Chercher plus de résultats pour mieux filtrer
+                n_results=n_results * 3,  # Plus de candidats
                 similarity_threshold=similarity_threshold
             )
             
