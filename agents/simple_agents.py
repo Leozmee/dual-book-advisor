@@ -232,17 +232,45 @@ class SimpleAgentManager:
             logger.info("🎌🦸 Routage vers agent manga/comics")
             return self.get_manga_recommendations(query)
         
-        # PRIORITÉ 2: Mots-clés techniques
+        # PRIORITÉ 2: Mots-clés techniques (détection par mots entiers)
         tech_keywords = [
             'python', 'javascript', 'java', 'c#', 'csharp', 'php', 'ruby', 'go',
             'programming', 'programmation', 'développement', 'development',
             'web', 'mobile', 'app', 'application', 'software', 'logiciel',
-            'machine learning', 'data science', 'ai', 'intelligence artificielle',
+            'machine learning', 'data science', 'intelligence artificielle',
             'algorithm', 'algorithme', 'code', 'coding', 'framework',
             'database', 'base de données', 'api', 'backend', 'frontend'
         ]
         
-        tech_score = sum(1 for keyword in tech_keywords if keyword in query_lower)
+        # Mots-clés techniques spéciaux nécessitant une détection par mots entiers
+        word_boundary_keywords = ['ai', 'app', 'code', 'api', 'go']
+        
+        # Mots-clés techniques qui peuvent être des sous-chaînes (comme "web" dans "website")
+        substring_keywords = ['web']
+        
+        tech_score = 0
+        
+        # Détection standard pour la plupart des mots-clés
+        for keyword in tech_keywords:
+            if keyword not in word_boundary_keywords and keyword not in substring_keywords and keyword in query_lower:
+                tech_score += 1
+                logger.info(f"🔧 Mot-clé technique détecté: '{keyword}'")
+        
+        # Détection par mots entiers pour les mots-clés ambigus
+        import re
+        for keyword in word_boundary_keywords:
+            if keyword in tech_keywords:  # Vérifier que le mot-clé est dans la liste
+                # Utiliser \b pour les frontières de mots
+                pattern = r'\b' + re.escape(keyword) + r'\b'
+                if re.search(pattern, query_lower):
+                    tech_score += 1
+                    logger.info(f"🔧 Mot-clé technique (frontière) détecté: '{keyword}'")
+        
+        # Détection par sous-chaînes pour les mots-clés techniques spéciaux
+        for keyword in substring_keywords:
+            if keyword in tech_keywords and keyword in query_lower:
+                tech_score += 1
+                logger.info(f"🔧 Mot-clé technique (sous-chaîne) détecté: '{keyword}'")
         
         if tech_score > 0:
             logger.info("🔧 Routage vers agent technique")
