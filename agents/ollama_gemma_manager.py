@@ -7,6 +7,7 @@ import ollama
 import requests
 from typing import List, Dict, Any, Optional
 import time
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -133,60 +134,96 @@ class OllamaGemmaManager:
             logger.error(f"❌ Erreur recommandation: {e}")
             return "Erreur lors de la génération de recommandation"
     
+    def generate_factual_response(self, query: str, book_info: str) -> str:
+        """Génère une réponse factuelle"""
+        try:
+            prompt = self._create_factual_prompt(query, book_info)
+            return self.generate_response(prompt, temperature=0.3, max_tokens=200)
+        except Exception as e:
+            logger.error(f"❌ Erreur réponse factuelle: {e}")
+            return "Erreur lors de la génération de la réponse factuelle"
+    
     def _create_tech_prompt(self, query: str, books_context: str) -> str:
-        """Crée un prompt pour les recommandations techniques"""
-        return f"""Tu es un expert en livres techniques et programmation. 
+        """Crée un prompt pour les recommandations techniques EN FRANÇAIS"""
+        return f"""Tu es un expert français en livres techniques et programmation. 
 
 Demande de l'utilisateur: "{query}"
 
 Livres techniques disponibles:
 {books_context}
 
-Instructions:
-- Génère une recommandation personnalisée et engageante
+IMPORTANT - Instructions strictes:
+- Réponds EXCLUSIVEMENT en français
+- Génère une recommandation personnalisée et professionnelle
 - Explique pourquoi ces livres correspondent à la demande
 - Sois précis sur les technologies, le niveau de difficulté, et les bénéfices
 - Utilise des emojis tech (🔧, 💻, 📚, ⭐)
 - Reste concis mais informatif
+- N'utilise AUCUN mot anglais sauf les noms de technologies (Python, JavaScript, etc.)
 
-Recommandation:"""
+Recommandation en français:"""
     
     def _create_literature_prompt(self, query: str, books_context: str) -> str:
-        """Crée un prompt pour les recommandations littéraires"""
-        return f"""Tu es un critique littéraire passionné et cultivé.
+        """Crée un prompt pour les recommandations littéraires EN FRANÇAIS"""
+        return f"""Tu es un critique littéraire français passionné et cultivé.
 
 Demande de l'utilisateur: "{query}"
 
 Livres littéraires disponibles:
 {books_context}
 
-Instructions:
+IMPORTANT - Instructions strictes:
+- Réponds EXCLUSIVEMENT en français
 - Génère une recommandation chaleureuse et érudite
 - Explique les thèmes, le style, et pourquoi ces œuvres plairont
 - Sois empathique et personnalise selon les goûts exprimés
 - Utilise des emojis littéraires (📚, ✨, 💫, 📖)
 - Évoque l'émotion et l'expérience de lecture
+- Utilise un français élégant et littéraire
 
-Recommandation:"""
+Recommandation en français:"""
     
     def _create_manga_prompt(self, query: str, books_context: str) -> str:
-        """Crée un prompt pour les recommandations manga"""
-        return f"""Tu es un otaku expert en manga et anime, passionné et connaisseur.
+        """Crée un prompt pour les recommandations manga/comics EN FRANÇAIS"""
+        return f"""Tu es un expert français passionné de manga, anime et bandes dessinées.
 
 Demande de l'utilisateur: "{query}"
 
-Mangas disponibles:
+Contenu disponible (mangas/comics/BD):
 {books_context}
 
-Instructions:
-- Génère une recommandation enthousiaste et précise
+IMPORTANT - Instructions strictes:
+- Réponds EXCLUSIVEMENT en français
+- Tu es un passionné français de la culture manga/BD, pas un "otaku anglophone"
+- Génère une recommandation enthousiaste mais en français correct
 - Explique les genres, l'histoire, les personnages
-- Utilise le vocabulaire otaku approprié (shounen, seinen, etc.)
-- Montre ta passion pour les mangas
+- Utilise les termes français appropriés : "bande dessinée", "manga", "comics"
+- Tu peux mentionner les termes japonais (shounen, seinen, etc.) mais explique-les en français
 - Utilise des emojis manga/anime (🎌, 🗾, ⚔️, 🌸, 🔥)
-- Compare avec d'autres mangas connus si pertinent
+- Compare avec d'autres œuvres connues si pertinent
+- Reste professionnel et informatif, pas trop familier
 
-Recommandation:"""
+Recommandation en français:"""
+    
+    def _create_factual_prompt(self, query: str, book_info: str) -> str:
+        """Crée un prompt pour les réponses factuelles EN FRANÇAIS"""
+        return f"""Tu es un bibliothécaire français expert en littérature.
+
+Question de l'utilisateur: "{query}"
+
+Informations sur le livre:
+{book_info}
+
+IMPORTANT - Instructions strictes:
+- Réponds EXCLUSIVEMENT en français
+- Donne une réponse factuelle précise et concise
+- Si c'est une question sur l'auteur, donne le nom de l'auteur clairement
+- Ajoute des informations contextuelles pertinentes (année, genre, etc.)
+- Utilise un français correct et professionnel
+- Sois informatif mais concis
+- Ne fais pas de recommandations, réponds juste à la question posée
+
+Réponse factuelle en français:"""
     
     def health_check(self) -> Dict[str, Any]:
         """Vérifie l'état du service Ollama et du modèle"""
@@ -287,13 +324,13 @@ class GemmaAgentManager:
             self.tech_rag = TechRAGManager()
             self.literature_rag = LiteratureRAGManager()
             
-            # Manga RAG (à créer plus tard)
+            # Manga RAG unifié
             try:
                 from rags.manga_rag.manga_rag_manager import MangaRAGManager
                 self.manga_rag = MangaRAGManager()
-                logger.info("✅ Manga RAG Manager chargé")
+                logger.info("✅ Manga RAG Manager unifié chargé")
             except ImportError:
-                logger.warning("⚠️ Manga RAG Manager non encore créé")
+                logger.warning("⚠️ Manga RAG Manager non disponible")
             
             logger.info("✅ RAG managers initialisés")
             
@@ -337,25 +374,25 @@ class GemmaAgentManager:
             return "🔧 Erreur lors de la génération des recommandations techniques."
     
     def get_literature_recommendations(self, query: str, user_id: int = 1) -> str:
-        """Génère des recommandations littéraires avec Gemma (SANS manga)"""
+        """Génère des recommandations littéraires avec Gemma (SANS manga/comics)"""
         try:
             if not self.literature_rag:
                 return "📚 Service littéraire temporairement indisponible."
             
             start_time = time.time()
             
-            # Obtenir des livres via RAG (filtrer les mangas)
+            # Obtenir des livres via RAG (filtrer les mangas/comics)
             recommendations = self.literature_rag.get_book_recommendations(
                 user_id=user_id,
                 query=query,
                 n_recommendations=3
             )
             
-            # Filtrer les mangas des résultats
-            filtered_recommendations = self._filter_out_manga(recommendations)
+            # Filtrer les mangas/comics des résultats
+            filtered_recommendations = self._filter_out_manga_comics(recommendations)
             
             if not filtered_recommendations:
-                return "📚 Aucun livre littéraire (non-manga) trouvé pour cette requête."
+                return "📚 Aucun livre littéraire (non-manga/comics) trouvé pour cette requête."
             
             # Préparer le contexte pour Gemma
             books_context = self._format_literature_context(filtered_recommendations)
@@ -376,42 +413,57 @@ class GemmaAgentManager:
             return "📚 Erreur lors de la génération des recommandations littéraires."
     
     def get_manga_recommendations(self, query: str, user_id: int = 1) -> str:
-        """Génère des recommandations manga avec Gemma"""
+        """Génère des recommandations manga/comics avec Gemma"""
         try:
             start_time = time.time()
             
             if self.manga_rag:
-                # Utiliser le RAG manga dédié
-                manga_results = self.manga_rag.search_manga(query, n_results=5)
+                # Utiliser le RAG manga/comics unifié
+                content_results = self.manga_rag.search_content(query, n_results=5)
             else:
                 # Fallback: chercher dans les données littéraires
-                manga_results = self._search_manga_fallback(query)
+                content_results = self._search_manga_comics_fallback(query)
             
-            if not manga_results:
-                return "🎌 Aucun manga trouvé pour cette requête."
+            if not content_results:
+                return "🎌 Aucun manga/comics trouvé pour cette requête."
             
             # Préparer le contexte pour Gemma
-            manga_context = self._format_manga_context(manga_results)
+            content_context = self._format_manga_comics_context(content_results)
             
             # Générer la réponse avec Gemma
             gemma_response = self.gemma.generate_book_recommendation(
                 query=query,
-                books_context=manga_context,
+                books_context=content_context,
                 agent_type="manga"
             )
             
             processing_time = time.time() - start_time
             
-            return f"🎌 **Recommandations Manga (Gemma-2-2b)**\n\n{gemma_response}\n\n⚡ Traitement en {processing_time:.1f}s"
+            return f"🎌 **Recommandations Manga/Comics (Gemma-2-2b)**\n\n{gemma_response}\n\n⚡ Traitement en {processing_time:.1f}s"
             
         except Exception as e:
-            logger.error(f"❌ Erreur recommandations manga: {e}")
-            return "🎌 Erreur lors de la génération des recommandations manga."
+            logger.error(f"❌ Erreur recommandations manga/comics: {e}")
+            return "🎌 Erreur lors de la génération des recommandations manga/comics."
     
-    def _filter_out_manga(self, recommendations: List[Dict]) -> List[Dict]:
-        """Filtre les mangas des recommandations littéraires"""
+    def get_factual_response(self, query: str, book_info: str) -> str:
+        """Génère une réponse factuelle avec Gemma EN FRANÇAIS"""
+        try:
+            # Générer la réponse avec Gemma
+            gemma_response = self.gemma.generate_factual_response(query, book_info)
+            
+            return f"📚 **Réponse (Gemma-2-2b)**\n\n{gemma_response}"
+            
+        except Exception as e:
+            logger.error(f"❌ Erreur réponse factuelle: {e}")
+            return "📚 Erreur lors de la génération de la réponse factuelle."
+    
+    def _filter_out_manga_comics(self, recommendations: List[Dict]) -> List[Dict]:
+        """Filtre les mangas/comics des recommandations littéraires"""
         filtered = []
-        manga_keywords = ['manga', 'anime', 'shounen', 'shoujo', 'seinen', 'josei', 'manhua', 'manhwa']
+        exclusion_keywords = [
+            'manga', 'anime', 'shounen', 'shoujo', 'seinen', 'josei', 'manhua', 'manhwa',
+            'comics', 'bd', 'bande dessinée', 'superhéros', 'superman', 'batman', 'marvel', 'dc'
+        ]
         
         for rec in recommendations:
             book = rec['book']
@@ -419,26 +471,26 @@ class GemmaAgentManager:
             desc_lower = book['description'].lower()
             categories_lower = book.get('categories', '').lower()
             
-            # Vérifier si c'est un manga
-            is_manga = any(keyword in title_lower or keyword in desc_lower or keyword in categories_lower 
-                          for keyword in manga_keywords)
+            # Vérifier si c'est un manga/comics
+            is_manga_comics = any(keyword in title_lower or keyword in desc_lower or keyword in categories_lower 
+                                for keyword in exclusion_keywords)
             
-            if not is_manga:
+            if not is_manga_comics:
                 filtered.append(rec)
         
         return filtered
     
-    def _search_manga_fallback(self, query: str) -> List[Dict]:
-        """Recherche manga de fallback dans les données littéraires"""
+    def _search_manga_comics_fallback(self, query: str) -> List[Dict]:
+        """Recherche manga/comics de fallback dans les données littéraires"""
         try:
             from apps.books.models import LiteratureBook
             
-            # Chercher des livres qui semblent être des mangas
-            manga_keywords = ['manga', 'anime', 'shounen', 'shoujo', 'seinen', 'josei']
+            # Chercher des livres qui semblent être des mangas/comics
+            keywords = ['manga', 'anime', 'shounen', 'shoujo', 'seinen', 'josei', 'comics', 'bd']
             
-            manga_books = LiteratureBook.objects.none()
-            for keyword in manga_keywords:
-                manga_books = manga_books | LiteratureBook.objects.filter(
+            books = LiteratureBook.objects.none()
+            for keyword in keywords:
+                books = books | LiteratureBook.objects.filter(
                     categories__icontains=keyword
                 ) | LiteratureBook.objects.filter(
                     description__icontains=keyword
@@ -446,22 +498,24 @@ class GemmaAgentManager:
                     title__icontains=keyword
                 )
             
-            # Convertir en format manga
+            # Convertir en format unifié
             results = []
-            for book in manga_books.distinct()[:5]:
+            for book in books.distinct()[:5]:
                 results.append({
                     'title': book.title,
                     'description': book.description,
                     'rating': float(book.average_rating) if book.average_rating else 0.0,
                     'year': book.published_year,
                     'tags': book.categories,
-                    'cover': book.thumbnail or ''
+                    'cover': book.thumbnail or '',
+                    'author': book.authors,
+                    'source_type': 'literature_fallback'
                 })
             
             return results
             
         except Exception as e:
-            logger.error(f"❌ Erreur recherche manga fallback: {e}")
+            logger.error(f"❌ Erreur recherche manga/comics fallback: {e}")
             return []
     
     def _format_tech_context(self, recommendations: List[Dict]) -> str:
@@ -484,38 +538,139 @@ class GemmaAgentManager:
             context += f"   Description: {book['description'][:150]}...\n\n"
         return context
     
-    def _format_manga_context(self, manga_list: List[Dict]) -> str:
-        """Formate le contexte manga pour Gemma"""
+    def _format_manga_comics_context(self, content_list: List[Dict]) -> str:
+        """Formate le contexte manga/comics pour Gemma"""
         context = ""
-        for i, manga in enumerate(manga_list, 1):
-            context += f"{i}. {manga['title']}\n"
-            context += f"   Note: {manga['rating']}/5, Année: {manga['year']}\n"
-            context += f"   Genres: {manga['tags']}\n"
-            context += f"   Description: {manga['description'][:150]}...\n\n"
+        for i, content in enumerate(content_list, 1):
+            context += f"{i}. {content['title']}\n"
+            if 'author' in content and content['author']:
+                context += f"   Auteur: {content['author']}\n"
+            context += f"   Note: {content['rating']}/5"
+            if 'year' in content and content['year']:
+                context += f", Année: {content['year']}"
+            context += f"\n   Genres: {content.get('tags', 'Non spécifié')}\n"
+            context += f"   Description: {content['description'][:150]}...\n\n"
         return context
     
     def route_query(self, query: str) -> str:
-        """Route une requête vers l'agent approprié"""
+        """Route une requête vers l'agent approprié avec détection factuelle"""
         query_lower = query.lower()
         
-        # Détection manga (priorité haute)
-        manga_keywords = ['manga', 'anime', 'naruto', 'one piece', 'dragon ball', 'attack on titan', 
-                         'death note', 'fullmetal', 'bleach', 'demon slayer', 'tokyo ghoul',
-                         'shounen', 'shoujo', 'seinen', 'josei', 'manhua', 'manhwa', 'otaku']
+        # PRIORITÉ 1: Questions factuelles (comme "qui est l'auteur de...")
+        if self._detect_factual_query(query_lower):
+            return self._handle_factual_query_with_gemma(query)
         
-        # Détection technique
-        tech_keywords = ['python', 'javascript', 'java', 'programming', 'code', 'development',
-                        'web', 'mobile', 'data science', 'machine learning', 'ai']
+        # PRIORITÉ 2: Détection manga/comics (mais pas littérature classique)
+        manga_comics_keywords = [
+            'manga', 'anime', 'naruto', 'one piece', 'dragon ball', 'attack on titan', 
+            'death note', 'fullmetal', 'bleach', 'demon slayer', 'tokyo ghoul',
+            'shounen', 'shoujo', 'seinen', 'josei', 'manhua', 'manhwa', 'otaku',
+            'comics', 'bd', 'bande dessinée', 'superman', 'batman', 'marvel', 'dc',
+            'tintin', 'astérix', 'superhéros'
+        ]
         
-        manga_score = sum(1 for keyword in manga_keywords if keyword in query_lower)
+        # PRIORITÉ 3: Détection technique
+        tech_keywords = [
+            'python', 'javascript', 'java', 'programming', 'code', 'development',
+            'web', 'mobile', 'data science', 'machine learning', 'ai'
+        ]
+        
+        # Littérature classique (ne va PAS vers manga/comics)
+        classic_keywords = [
+            'jules verne', 'victor hugo', 'alexandre dumas', 'les enfants du capitaine grant',
+            'les misérables', 'notre-dame de paris', 'guerre et paix', 'anna karénine',
+            'shakespeare', 'hamlet', 'camus', 'l\'étranger'
+        ]
+        
+        manga_score = sum(1 for keyword in manga_comics_keywords if keyword in query_lower)
         tech_score = sum(1 for keyword in tech_keywords if keyword in query_lower)
+        classic_score = sum(1 for keyword in classic_keywords if keyword in query_lower)
         
-        if manga_score > 0:
+        # Si c'est de la littérature classique, ne pas aller vers manga/comics
+        if classic_score > 0:
+            return self.get_literature_recommendations(query)
+        elif manga_score > 0:
             return self.get_manga_recommendations(query)
         elif tech_score > 0:
             return self.get_tech_recommendations(query)
         else:
             return self.get_literature_recommendations(query)
+    
+    def _detect_factual_query(self, query_lower: str) -> bool:
+        """Détecte si c'est une question factuelle"""
+        factual_patterns = [
+            'qui est', 'who is', 'quel est', 'what is',
+            'auteur de', 'author of', 'écrit par', 'written by',
+            'quand', 'when', 'où', 'where', 'comment', 'how'
+        ]
+        return any(pattern in query_lower for pattern in factual_patterns)
+    
+    def _handle_factual_query_with_gemma(self, query: str) -> str:
+        """Gère les questions factuelles avec Gemma"""
+        try:
+            # Essayer de trouver des informations dans le RAG littéraire
+            if self.literature_rag:
+                # Extraire le titre du livre de la question
+                title = self._extract_book_title(query)
+                if title:
+                    results = self.literature_rag.search_books(query=title, n_results=1)
+                    if results:
+                        book = results[0]
+                        book_info = f"""Titre: {book['title']}
+Auteur(s): {book['authors']}
+Année de publication: {book.get('published_year', 'Non spécifiée')}
+Note moyenne: {book['average_rating']}/5
+Description: {book['description'][:200]}..."""
+                        
+                        return self.get_factual_response(query, book_info)
+            
+            # Fallback pour "Les Enfants du Capitaine Grant" et autres classiques
+            if "les enfants du capitaine grant" in query.lower():
+                book_info = """Titre: Les Enfants du Capitaine Grant
+Auteur: Jules Verne
+Année de publication: 1867-1868
+Genre: Roman d'aventures
+Description: Roman d'aventures de Jules Verne où les enfants du capitaine Grant partent à la recherche de leur père disparu autour du monde."""
+                return self.get_factual_response(query, book_info)
+            
+            elif "les misérables" in query.lower():
+                book_info = """Titre: Les Misérables
+Auteur: Victor Hugo
+Année de publication: 1862
+Genre: Roman social
+Description: Œuvre majeure de Victor Hugo décrivant la vie des classes populaires en France au XIXe siècle."""
+                return self.get_factual_response(query, book_info)
+            
+            elif "notre-dame de paris" in query.lower():
+                book_info = """Titre: Notre-Dame de Paris
+Auteur: Victor Hugo
+Année de publication: 1831
+Genre: Roman historique
+Description: Roman de Victor Hugo se déroulant au XVe siècle autour de la cathédrale Notre-Dame de Paris."""
+                return self.get_factual_response(query, book_info)
+            
+            # Si pas trouvé, réponse générale
+            return "📚 Je n'ai pas trouvé d'information spécifique sur cette question dans ma base de données."
+            
+        except Exception as e:
+            logger.error(f"Erreur gestion question factuelle: {e}")
+            return "📚 Erreur lors du traitement de votre question."
+    
+    def _extract_book_title(self, query: str) -> str:
+        """Extrait le titre du livre de la question"""
+        patterns = [
+            r'auteur de\s+(.+?)(?:\?|$)',
+            r'author of\s+(.+?)(?:\?|$)',
+            r'écrit\s+(.+?)(?:\?|$)',
+            r'"([^"]+)"',
+            r'«([^»]+)»'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                return match.group(1).strip()
+        return ""
     
     def health_check(self) -> Dict[str, Any]:
         """Vérifie l'état de tous les composants"""
