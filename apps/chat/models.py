@@ -8,7 +8,8 @@ class ConversationHistory(models.Model):
     AGENT_CHOICES = [
         ('tech', 'Tech Agent'),
         ('literature', 'Literature Agent'),
-        ('manga', 'Manga Agent'),
+        ('manga', 'Manga/Comics Agent'),
+        ('coordinator', 'Agent Coordinateur'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)

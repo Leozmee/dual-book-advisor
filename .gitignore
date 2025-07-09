@@ -208,3 +208,7 @@ __marimo__/
 rags/manga_rag/chroma_db/chroma.sqlite3
 rags/literature_rag/chroma_db/chroma.sqlite3
 *.sqlite3
+
+rags/manga_rag/chroma_db/a3fbd251-f017-4660-b4f8-ef474cecf9f8/data_level0.bin
+rags/manga_rag/chroma_db/*.bin
+rags/manga_rag/chroma_db/

@@ -23,7 +23,25 @@
     </div>
 
     <!-- Agent Cards -->
-    <div class="grid md:grid-cols-2 gap-8 mb-8">
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Coordinator Agent -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center">
+                <div class="text-4xl mb-4">🤖</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">Agent Coordinateur</h3>
+                <p class="text-gray-600 mb-4">
+                    Posez n'importe quelle question et je vous dirigerai automatiquement vers l'agent approprié.
+                </p>
+                <div class="bg-gray-50 rounded p-3 text-sm">
+                    <strong>Exemple:</strong> "Je veux apprendre l'IA" → Tech Agent
+                </div>
+                <a href="/chat/?agent=coordinator" 
+                   class="inline-block mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+                    Chat avec Agent Coordinateur
+                </a>
+            </div>
+        </div>
+
         <!-- Tech Agent -->
         <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="text-center">
@@ -58,6 +76,25 @@
                 <a href="/chat/?agent=literature" 
                    class="inline-block mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
                     Chat with Literature Agent
+                </a>
+            </div>
+        </div>
+
+        <!-- Manga/Comics Agent -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="text-center">
+                <div class="text-4xl mb-4">🎌</div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">Manga/Comics Agent</h3>
+                <p class="text-gray-600 mb-4">
+                    Expert in manga, anime, comics, BD, and graphic novels. 
+                    Get recommendations based on your visual storytelling preferences.
+                </p>
+                <div class="bg-gray-50 rounded p-3 text-sm">
+                    <strong>Example:</strong> "I liked Attack on Titan, what should I read next?"
+                </div>
+                <a href="/chat/?agent=manga" 
+                   class="inline-block mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                    Chat with Manga/Comics Agent
                 </a>
             </div>
         </div>

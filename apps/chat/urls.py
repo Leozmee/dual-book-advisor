@@ -12,6 +12,7 @@ urlpatterns = [
     path('tech-agent/', views.TechAgentChatView.as_view(), name='tech_agent_chat'),
     path('literature-agent/', views.LiteratureAgentChatView.as_view(), name='literature_agent_chat'),
     path('manga-agent/', views.MangaAgentChatView.as_view(), name='manga_agent_chat'),
+    path('coordinator-agent/', views.CoordinatorAgentChatView.as_view(), name='coordinator_agent_chat'),
     
     # LangChain endpoints
     path('langchain/', langchain_views.langchain_chat, name='langchain_chat'),

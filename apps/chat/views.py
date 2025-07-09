@@ -1,4 +1,3 @@
-from rags.tech_rag.tech_rag_manager import TechRAGManager
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -248,111 +247,8 @@ class TechAgentChatView(APIView):
             'user_message': MessageSerializer(user_msg).data,
             'agent_response': MessageSerializer(agent_msg).data
         })
-    
-    def _get_tech_recommendation(self, message):
-        """Obtenir des recommandations techniques intelligentes avec RAG"""
-        try:
-            start_time = time.time()
-            tech_rag = TechRAGManager()
-            
-            # Utiliser l'utilisateur demo par défaut
-            from apps.accounts.models import User
-            demo_user = User.objects.get(email='demo@example.com')
-            
-            # Obtenir des recommandations basées sur le RAG
-            recommendations = tech_rag.get_book_recommendations(
-                user_id=demo_user.id,
-                query=message,
-                n_recommendations=3
-            )
-            
-            processing_time = time.time() - start_time
-            
-            if recommendations:
-                # Analyser le contexte de la requête pour personnaliser la réponse
-                context_intro = self._generate_contextual_intro(message, recommendations)
-                response = f"🔧 {context_intro}\n\n"
-                
-                for i, rec in enumerate(recommendations, 1):
-                    book = rec['book']
-                    response += f"{i}. **{book['title']}** par {book['author']}\n"
-                    response += f"   ⭐ Note: {book['rating']}/5"
-                    if book['price'] > 0:
-                        response += f" | 💰 ${book['price']}"
-                    response += f"\n   📊 Pertinence: {rec['similarity_score']:.1%}\n"
-                    response += f"   💡 {rec['reason']}\n"
-                    response += f"   📖 {book['description'][:120]}...\n\n"
-                
-                response += f"\n⚡ Recherche sémantique - {processing_time:.2f}s"
-                return response
-            else:
-                return self._generate_fallback_response(message)
-                
-        except Exception as e:
-            logger.error(f"Erreur RAG technique: {e}")
-            # Fallback vers l'ancienne méthode en cas d'erreur
-            from apps.books.models import TechBook
-            books = TechBook.objects.filter(rating__gte=4.0).order_by('?')[:2]
-            if books:
-                response = "🔧 Voici quelques excellents livres techniques:\n\n"
-                for book in books:
-                    response += f"📚 **{book.title}** par {book.author}\n"
-                    response += f"⭐ Note: {book.rating}/5\n\n"
-                return response
-            return "🔧 Je suis là pour vous aider avec les recommandations techniques!"
-    
-    def _generate_contextual_intro(self, message: str, recommendations: List[Dict]) -> str:
-        """Génère une introduction contextuelle basée sur la requête utilisateur"""
-        import re
-        
-        message_lower = message.lower()
-        
-        # Détection des contextes spécifiques
-        if re.search(r'\b(musique|music|audio)\b', message_lower):
-            return "Excellent choix ! La programmation audio et musicale est un domaine fascinant. Voici mes recommandations pour allier votre passion musicale à la technologie :"
-        
-        elif re.search(r'\b(sport|fitness|santé|health)\b', message_lower):
-            return "Parfait ! Le sport et la technologie se marient très bien. Voici des recommandations pour développer des applications fitness, analyser des données sportives ou créer des outils de santé :"
-        
-        elif re.search(r'\b(art|design|créatif)\b', message_lower):
-            return "Génial ! La programmation créative ouvre des horizons infinis. Voici mes suggestions pour allier art et code :"
-        
-        elif re.search(r'\b(jeu|game|gaming)\b', message_lower):
-            return "Excellent ! Le développement de jeux est un domaine passionnant. Voici mes recommandations pour créer vos propres jeux :"
-        
-        elif re.search(r'\b(apprendre|learn|débutant|beginner)\b', message_lower):
-            return "Parfait pour débuter ! J'ai sélectionné des livres adaptés aux débutants pour vous lancer dans la programmation :"
-        
-        elif re.search(r'\b(web|site|internet)\b', message_lower):
-            return "Le développement web est un excellent choix ! Voici mes recommandations pour créer des sites et applications web modernes :"
-        
-        elif re.search(r'\b(mobile|app|application)\b', message_lower):
-            return "Les applications mobiles ont un grand avenir ! Voici mes suggestions pour développer vos propres apps :"
-        
-        elif re.search(r'\b(data|données|machine learning|ai)\b', message_lower):
-            return "La data science et l'IA sont des domaines d'avenir ! Voici mes recommandations pour maîtriser ces technologies :"
-        
-        else:
-            return "J'ai analysé votre demande et voici mes recommandations techniques personnalisées :"
-    
-    def _generate_fallback_response(self, message: str) -> str:
-        """Génère une réponse de fallback adaptative quand aucun livre n'est trouvé"""
-        import re
-        
-        message_lower = message.lower()
-        
-        # Suggestions contextuelles même sans résultats
-        if re.search(r'\b(musique|music|audio)\b', message_lower):
-            return "🔧 Je comprends votre intérêt pour la musique ! Même si je n'ai pas trouvé de correspondance exacte, essayez de rechercher 'Python audio' ou 'JavaScript music' pour des livres sur la programmation musicale."
-        
-        elif re.search(r'\b(sport|fitness|santé|health)\b', message_lower):
-            return "🔧 Votre passion pour le sport est inspirante ! Recherchez 'Python data analysis' ou 'mobile app development' pour créer des applications fitness et analyser des données sportives."
-        
-        elif re.search(r'\b(art|design|créatif)\b', message_lower):
-            return "🔧 L'art et la programmation font bon ménage ! Essayez 'creative coding', 'Python graphics' ou 'JavaScript animation' pour des projets artistiques."
-        
-        else:
-            return "🔧 Je n'ai pas trouvé de correspondance exacte, mais je peux vous aider ! Précisez un langage (Python, JavaScript, C#) ou un domaine (web, mobile, data) qui vous intéresse."
+
+
 
 
 class LiteratureAgentChatView(APIView):
@@ -403,6 +299,8 @@ class LiteratureAgentChatView(APIView):
             'user_message': MessageSerializer(user_msg).data,
             'agent_response': MessageSerializer(agent_msg).data
         })
+
+
     def _get_literature_recommendation(self, message):
         """Obtenir des recommandations littéraires intelligentes avec notre SimpleAgentManager"""
         try:
@@ -438,8 +336,8 @@ class LiteratureAgentChatView(APIView):
                     response += f"⭐ Note: {book.average_rating}/5\n\n"
                 return response
             return "📚 Je suis là pour vous faire découvrir de merveilleux livres!"
-        
-from apps.chat.models import ConversationHistory, Message
+
+
 
 class MangaAgentChatView(APIView):
     permission_classes = []
@@ -485,3 +383,101 @@ class MangaAgentChatView(APIView):
             'user_message': MessageSerializer(user_msg).data,
             'agent_response': MessageSerializer(agent_msg).data
         })
+
+
+class CoordinatorAgentChatView(APIView):
+    permission_classes = []
+    
+    def post(self, request):
+        message = request.data.get('message')
+        if not message:
+            return Response({'error': 'Message is required'}, status=400)
+        
+        from apps.accounts.models import User
+        demo_user, created = User.objects.get_or_create(
+            email='demo@example.com',
+            defaults={'username': 'demo', 'first_name': 'Demo', 'last_name': 'User'}
+        )
+        
+        # Utiliser SimpleAgentManager pour router automatiquement
+        agent_manager = SimpleAgentManager()
+        
+        # Utiliser la méthode route_query du SimpleAgentManager qui contient la logique corrigée
+        routing_response = agent_manager.route_query(message)
+        
+        # Détermine quel agent a été utilisé en analysant la réponse
+        agent_type = self._determine_agent_from_response(routing_response)
+        
+        # Créer la conversation avec le type d'agent approprié
+        conversation = ConversationHistory.objects.create(
+            user=demo_user,
+            agent_type='coordinator',  # Nouveau type d'agent
+            title=f"Coordinator Chat - {message[:30]}..."
+        )
+        
+        user_msg = Message.objects.create(
+            conversation=conversation,
+            sender='user',
+            content=message
+        )
+        
+        # Nettoyer les indicateurs d'agent du contenu (géré côté frontend maintenant)
+        coordinated_response = self._clean_agent_indicators(routing_response)
+        
+        agent_msg = Message.objects.create(
+            conversation=conversation,
+            sender='agent',
+            content=coordinated_response,
+            rag_sources=f"RAG_{agent_type}_via_coordinator"
+        )
+        
+        conversation.save()
+        
+        return Response({
+            'conversation_id': conversation.id,
+            'user_message': MessageSerializer(user_msg).data,
+            'agent_response': MessageSerializer(agent_msg).data,
+            'routed_to': agent_type  # Indiquer quel agent a traité la requête
+        })
+    
+    def _determine_agent_from_response(self, response):
+        """Déterminer quel agent a répondu en analysant la réponse"""
+        response_lower = response.lower()
+        
+        # Détection par les emojis et mots-clés de l'agent
+        if "🔧" in response or "recommandations techniques" in response_lower or "tech agent" in response_lower:
+            return "tech"
+        elif "🎌" in response or "🦸" in response or "manga" in response_lower or "comics" in response_lower:
+            return "manga"
+        elif "📚" in response or "recommandations littéraires" in response_lower or "literature agent" in response_lower:
+            return "literature"
+        else:
+            # Par défaut, littéraire
+            return "literature"
+    
+    def _clean_agent_indicators(self, content):
+        """Nettoyer les indicateurs d'agent du contenu"""
+        import re
+        
+        # Supprimer les indicateurs d'agents
+        cleaned_content = re.sub(r'🔧 \*\*Réponse du Tech Agent\*\*\s*', '', content)
+        cleaned_content = re.sub(r'🔧 \*\*Recommandations Techniques.*?\*\*\s*', '', cleaned_content)
+        cleaned_content = re.sub(r'📚 \*\*Réponse du Literature Agent\*\*\s*', '', cleaned_content)
+        cleaned_content = re.sub(r'📚 \*\*Recommandations Littéraires.*?\*\*\s*', '', cleaned_content)
+        cleaned_content = re.sub(r'🎌 \*\*Réponse du Manga/Comics Agent\*\*\s*', '', cleaned_content)
+        cleaned_content = re.sub(r'🎌 \*\*Recommandations Manga.*?\*\*\s*', '', cleaned_content)
+        cleaned_content = re.sub(r'🦸 \*\*Recommandations Comics.*?\*\*\s*', '', cleaned_content)
+        cleaned_content = re.sub(r'📖 \*\*Réponse du Literature Agent\*\*\s*', '', cleaned_content)
+        
+        return cleaned_content.strip()
+    
+    def _get_agent_indicator(self, agent_type):
+        """Obtenir l'indicateur visuel pour l'agent qui répond"""
+        if agent_type == "tech":
+            return "🔧 **Réponse du Tech Agent**"
+        elif agent_type == "manga":
+            return "🎌 **Réponse du Manga/Comics Agent**"
+        elif agent_type == "literature":
+            return "📖 **Réponse du Literature Agent**"
+        else:
+            return "🤖 **Agent Coordinateur**"
