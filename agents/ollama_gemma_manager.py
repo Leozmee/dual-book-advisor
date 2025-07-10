@@ -11,14 +11,24 @@ import re
 
 logger = logging.getLogger(__name__)
 
+# Import du service d'images
+try:
+    from .cover_image_service import cover_service
+    COVER_SERVICE_AVAILABLE = True
+    logger.info("✅ Cover Image Service disponible dans Gemma Manager")
+except ImportError as e:
+    COVER_SERVICE_AVAILABLE = False
+    logger.warning(f"⚠️ Cover Image Service non disponible dans Gemma Manager: {e}")
+
 
 class OllamaGemmaManager:
     """Gestionnaire pour Gemma-2-2b via Ollama"""
     
-    def __init__(self, model_name: str = "gemma2:2b"):
+    def __init__(self, model_name: str = "gemma2:2b", use_cover_images: bool = True):
         self.model_name = model_name
         self.client = None
         self.base_url = "http://localhost:11434"
+        self.use_cover_images = use_cover_images and COVER_SERVICE_AVAILABLE
         self._init_client()
     
     def _init_client(self):
@@ -308,11 +318,12 @@ Réponse factuelle en français:"""
 class GemmaAgentManager:
     """Gestionnaire d'agents utilisant Gemma via Ollama"""
     
-    def __init__(self):
-        self.gemma = OllamaGemmaManager()
+    def __init__(self, use_cover_images: bool = True):
+        self.gemma = OllamaGemmaManager(use_cover_images=use_cover_images)
         self.tech_rag = None
         self.literature_rag = None
         self.manga_rag = None
+        self.use_cover_images = use_cover_images and COVER_SERVICE_AVAILABLE
         self._init_rag_managers()
     
     def _init_rag_managers(self):
@@ -365,6 +376,10 @@ class GemmaAgentManager:
                 agent_type="tech"
             )
             
+            # Enrichir avec des images de couverture si activé
+            if self.use_cover_images:
+                gemma_response = self._enrich_response_with_images(gemma_response, recommendations, 'tech')
+            
             processing_time = time.time() - start_time
             
             return f"🔧 **Recommandations Techniques (Gemma-2-2b)**\n\n{gemma_response}\n\n⚡ Traitement en {processing_time:.1f}s"
@@ -404,6 +419,10 @@ class GemmaAgentManager:
                 agent_type="literature"
             )
             
+            # Enrichir avec des images de couverture si activé
+            if self.use_cover_images:
+                gemma_response = self._enrich_response_with_images(gemma_response, filtered_recommendations, 'literature')
+            
             processing_time = time.time() - start_time
             
             return f"📚 **Recommandations Littéraires (Gemma-2-2b)**\n\n{gemma_response}\n\n⚡ Traitement en {processing_time:.1f}s"
@@ -437,6 +456,10 @@ class GemmaAgentManager:
                 agent_type="manga"
             )
             
+            # Enrichir avec des images de couverture si activé
+            if self.use_cover_images:
+                gemma_response = self._enrich_response_with_images(gemma_response, content_results, 'manga')
+            
             processing_time = time.time() - start_time
             
             return f"🎌 **Recommandations Manga/Comics (Gemma-2-2b)**\n\n{gemma_response}\n\n⚡ Traitement en {processing_time:.1f}s"
@@ -444,6 +467,75 @@ class GemmaAgentManager:
         except Exception as e:
             logger.error(f"❌ Erreur recommandations manga/comics: {e}")
             return "🎌 Erreur lors de la génération des recommandations manga/comics."
+    
+    def _enrich_response_with_images(self, response: str, recommendations: List[Dict], content_type: str) -> str:
+        """Enrichit une réponse Gemma avec des images de couverture"""
+        if not self.use_cover_images or not COVER_SERVICE_AVAILABLE:
+            return response
+        
+        try:
+            logger.info(f"🖼️ Enrichissement Gemma avec images pour {len(recommendations)} recommandations ({content_type})")
+            
+            enriched_response = response
+            
+            for rec in recommendations:
+                # Extraire les informations selon le type de contenu
+                if content_type == 'tech':
+                    book = rec.get('book', {})
+                    title = book.get('title', '')
+                    author = book.get('author', '')
+                    search_type = 'book'
+                elif content_type == 'literature':
+                    book = rec.get('book', {})
+                    title = book.get('title', '')
+                    author = book.get('authors', '')
+                    search_type = 'book'
+                elif content_type == 'manga':
+                    # Pour le manga, le format peut être différent
+                    if 'content' in rec:
+                        content = rec.get('content', {})
+                        title = content.get('title', '')
+                        author = content.get('author', '')
+                    else:
+                        # Format alternatif
+                        title = rec.get('title', '')
+                        author = rec.get('author', '')
+                    search_type = 'manga'
+                else:
+                    continue
+                
+                if not title:
+                    continue
+                
+                # Rechercher l'image de couverture
+                cover_url = cover_service.get_cover_image(title, author, search_type)
+                
+                if cover_url:
+                    logger.info(f"✅ Image trouvée pour: {title}")
+                    
+                    # Insérer l'image avant la mention du titre dans la réponse
+                    # Chercher le titre dans la réponse (avec différents formats possibles)
+                    title_patterns = [
+                        f"**{title}**",
+                        f"*{title}*",
+                        title
+                    ]
+                    
+                    image_tag = f"📸 ![{title}]({cover_url})\n\n"
+                    
+                    for pattern in title_patterns:
+                        if pattern in enriched_response and image_tag not in enriched_response:
+                            # Insérer l'image juste avant la première occurrence du titre
+                            enriched_response = enriched_response.replace(pattern, f"{image_tag}{pattern}", 1)
+                            break
+                else:
+                    logger.info(f"❌ Aucune image trouvée pour: {title}")
+            
+            return enriched_response
+            
+        except Exception as e:
+            logger.error(f"❌ Erreur enrichissement images: {e}")
+            return response
     
     def get_factual_response(self, query: str, book_info: str) -> str:
         """Génère une réponse factuelle avec Gemma EN FRANÇAIS"""

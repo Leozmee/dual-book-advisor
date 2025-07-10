@@ -3,9 +3,12 @@
 {% block title %}Chat - Dual Book Advisor{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto" x-data="chatApp()">
-    <!-- Agent Selection -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+<div class="max-w-7xl mx-auto" x-data="chatApp()">
+    <div class="flex gap-6">
+        <!-- Zone de chat principale (côté gauche) -->
+        <div class="flex-1 max-w-4xl">
+            <!-- Agent Selection -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
         <h2 class="text-2xl font-bold text-gray-900 mb-4">Choose Your Agent</h2>
         <div class="flex flex-wrap gap-4">
             <button @click="selectAgent('coordinator')" 
@@ -121,6 +124,58 @@
         </form>
         <div class="mt-2 text-xs text-gray-500" x-show="!selectedAgent">
             Please select an agent first
+            </div>
+        </div>
+        
+        <!-- Zone d'images des livres (côté droit) -->
+        <div class="w-80 flex-shrink-0">
+            <div class="bg-white rounded-lg shadow-lg p-6 sticky top-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">📚 Livres Recommandés</h3>
+                
+                <!-- Message d'état quand pas d'images -->
+                <div x-show="bookImages.length === 0" class="text-center text-gray-500 py-8">
+                    <div class="text-4xl mb-2">📖</div>
+                    <p class="text-sm">Les images des livres recommandés apparaîtront ici</p>
+                </div>
+                
+                <!-- Galerie d'images -->
+                <div class="space-y-4 max-h-96 overflow-y-auto book-gallery">
+                    <template x-for="book in bookImages" :key="book.id">
+                        <div class="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition cursor-pointer book-item">
+                            <div class="flex items-start space-x-3">
+                                <!-- Image de couverture -->
+                                <div class="w-16 h-20 bg-gray-200 rounded overflow-hidden flex-shrink-0">
+                                    <img :src="book.image" 
+                                         :alt="book.title"
+                                         class="w-full h-full object-cover"
+                                         @error="handleImageError($event, book)"
+                                         loading="lazy">
+                                </div>
+                                
+                                <!-- Info du livre -->
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-medium text-gray-900 truncate" x-text="book.title"></h4>
+                                    <p class="text-xs text-gray-600 truncate" x-text="book.author" x-show="book.author"></p>
+                                    <div class="flex items-center mt-1">
+                                        <span class="text-xs text-yellow-600" x-show="book.rating">
+                                            ⭐ <span x-text="book.rating"></span>
+                                        </span>
+                                        <span class="text-xs text-gray-500 ml-2" x-text="book.type" x-show="book.type"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Bouton pour vider la galerie -->
+                <div x-show="bookImages.length > 0" class="mt-4 pt-4 border-t">
+                    <button @click="clearBookImages()" 
+                            class="w-full text-xs text-gray-500 hover:text-gray-700 py-2">
+                        🗑️ Vider la galerie
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -133,6 +188,7 @@ function chatApp() {
         newMessage: '',
         isLoading: false,
         currentRespondingAgent: null,
+        bookImages: [], // Nouveau: tableau pour stocker les images des livres
         
         init() {
             // Check URL params for agent selection
@@ -146,6 +202,7 @@ function chatApp() {
         selectAgent(agent) {
             this.selectedAgent = agent;
             this.messages = [];
+            this.bookImages = []; // Vider les images lors du changement d'agent
             
             // Add welcome message
             this.addMessage('agent', this.getWelcomeMessage(agent));
@@ -207,11 +264,23 @@ function chatApp() {
                     
                     // Nettoyer le contenu de l'indicateur d'agent
                     let cleanedContent = data.agent_response.content;
+                    console.log('📨 Réponse reçue (taille):', cleanedContent.length);
+                    console.log('📨 Contenu brut:', cleanedContent.substring(0, 300) + '...');
+                    
                     if (this.selectedAgent === 'coordinator') {
                         cleanedContent = this.cleanAgentIndicator(cleanedContent);
                     }
                     
-                    this.addMessage('agent', cleanedContent);
+                    console.log('🧹 Contenu nettoyé (taille):', cleanedContent.length);
+                    
+                    // Extraire les images des livres du contenu
+                    this.extractBookImages(cleanedContent);
+                    
+                    // Nettoyer le contenu des balises d'images pour l'affichage du chat
+                    const contentWithoutImages = this.removeImageTags(cleanedContent);
+                    console.log('📝 Contenu final (sans images):', contentWithoutImages.substring(0, 200) + '...');
+                    
+                    this.addMessage('agent', contentWithoutImages);
                 } else {
                     this.addMessage('agent', 'Sorry, I encountered an error. Please try again.');
                 }
@@ -247,6 +316,117 @@ function chatApp() {
                 .replace(/🎌 \*\*Réponse du Manga\/Comics Agent\*\*\s*/g, '')
                 .replace(/📖 \*\*Réponse du Literature Agent\*\*\s*/g, '')
                 .trim();
+        },
+        
+        extractBookImages(content) {
+            console.log('🔍 ExtractBookImages appelée avec:', content.substring(0, 200) + '...');
+            
+            // Regex pour extraire les images avec format: 📸 ![titre](url)
+            const imageRegex = /📸\s*!\[([^\]]*)\]\(([^)]+)\)/g;
+            let match;
+            let imageCount = 0;
+            
+            while ((match = imageRegex.exec(content)) !== null) {
+                imageCount++;
+                console.log(`📸 Image ${imageCount} trouvée:`, match[1], '→', match[2]);
+                const title = match[1] || 'Livre sans titre';
+                const imageUrl = match[2];
+                
+                // Extraire des informations supplémentaires du contexte
+                const bookInfo = this.extractBookInfoFromContext(content, title);
+                
+                // Ajouter à la galerie d'images si pas déjà présent
+                if (!this.bookImages.find(book => book.image === imageUrl)) {
+                    const newBook = {
+                        id: Date.now() + Math.random(), // ID unique
+                        title: title,
+                        image: imageUrl,
+                        author: bookInfo.author || '',
+                        rating: bookInfo.rating || '',
+                        type: bookInfo.type || this.getAgentType()
+                    };
+                    this.bookImages.push(newBook);
+                    console.log('✅ Image ajoutée à la galerie:', newBook);
+                } else {
+                    console.log('⚠️ Image déjà présente:', imageUrl);
+                }
+            }
+            
+            console.log(`📊 Total images extraites: ${imageCount}, Galerie: ${this.bookImages.length}`);
+        },
+        
+        extractBookInfoFromContext(content, bookTitle) {
+            // Chercher les informations du livre dans le contexte autour du titre
+            const lines = content.split('\n');
+            let bookInfo = { author: '', rating: '', type: '' };
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                // Si on trouve le titre, chercher les infos dans les lignes suivantes
+                if (line.includes(bookTitle)) {
+                    for (let j = i; j < Math.min(i + 5, lines.length); j++) {
+                        const contextLine = lines[j];
+                        
+                        // Extraire l'auteur
+                        const authorMatch = contextLine.match(/(?:par|de|by)\s+([^\n]+?)(?:\s|$)/i);
+                        if (authorMatch && !bookInfo.author) {
+                            bookInfo.author = authorMatch[1].trim().replace(/[,|\n].*/, '');
+                        }
+                        
+                        // Extraire la note
+                        const ratingMatch = contextLine.match(/⭐[^0-9]*([0-9.]+)\/5/);
+                        if (ratingMatch && !bookInfo.rating) {
+                            bookInfo.rating = ratingMatch[1] + '/5';
+                        }
+                        
+                        // Déterminer le type
+                        if (contextLine.includes('🎌')) bookInfo.type = 'Manga';
+                        else if (contextLine.includes('🦸')) bookInfo.type = 'Comics';
+                        else if (contextLine.includes('🔧')) bookInfo.type = 'Tech';
+                        else if (contextLine.includes('📚')) bookInfo.type = 'Littérature';
+                    }
+                    break;
+                }
+            }
+            
+            return bookInfo;
+        },
+        
+        removeImageTags(content) {
+            // Supprimer les balises d'images du contenu pour l'affichage dans le chat
+            return content.replace(/📸\s*!\[([^\]]*)\]\(([^)]+)\)\s*/g, '');
+        },
+        
+        getAgentType() {
+            // Retourne le type d'agent pour catégoriser les livres
+            switch(this.selectedAgent) {
+                case 'tech': return 'Tech';
+                case 'literature': return 'Littérature';
+                case 'manga': return 'Manga/Comics';
+                case 'coordinator': return this.currentRespondingAgent ? 
+                    this.getAgentTypeFromResponding(this.currentRespondingAgent) : 'Mixte';
+                default: return 'Livre';
+            }
+        },
+        
+        getAgentTypeFromResponding(agent) {
+            switch(agent) {
+                case 'tech': return 'Tech';
+                case 'literature': return 'Littérature';
+                case 'manga': return 'Manga/Comics';
+                default: return 'Livre';
+            }
+        },
+        
+        clearBookImages() {
+            this.bookImages = [];
+        },
+        
+        handleImageError(event, book) {
+            // Gérer les erreurs de chargement d'images
+            event.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA2NCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0yMCAzMkgxNlY0NEgyMFYzMlpNNDggMzJINDRWNDRINDhWMzJaTTM2IDQ4SDI4VjUySDM2VjQ4WiIgZmlsbD0iIzlDQTNBRiIvPgo8L3N2Zz4K';
+            console.log('Erreur de chargement d\'image pour:', book.title);
         },
         
         getCSRFToken() {
@@ -298,6 +478,71 @@ function chatApp() {
     100% {
         opacity: 0.2;
         transform: scale(0.8);
+    }
+}
+
+/* Styles pour la galerie d'images */
+.book-gallery {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.book-gallery::-webkit-scrollbar {
+    width: 6px;
+}
+
+.book-gallery::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.book-gallery::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.book-gallery::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Animation d'apparition pour les nouvelles images */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.book-item {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+/* Amélioration de l'affichage responsive */
+@media (max-width: 1024px) {
+    .max-w-7xl {
+        max-width: 4xl;
+    }
+    
+    .w-80 {
+        width: 16rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .flex {
+        flex-direction: column;
+    }
+    
+    .w-80 {
+        width: 100%;
+    }
+    
+    .sticky {
+        position: relative;
     }
 }
 </style>
