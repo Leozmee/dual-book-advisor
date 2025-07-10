@@ -20,11 +20,20 @@ except ImportError as e:
     logger = logging.getLogger(__name__)
     logger.warning(f"⚠️ Gemma Manager non disponible: {e}")
 
+# Import du service d'images
+try:
+    from .cover_image_service import cover_service
+    COVER_SERVICE_AVAILABLE = True
+    logger.info("✅ Cover Image Service disponible")
+except ImportError as e:
+    COVER_SERVICE_AVAILABLE = False
+    logger.warning(f"⚠️ Cover Image Service non disponible: {e}")
+
 
 class SimpleAgentManager:
     """Gestionnaire simple pour les agents de recommandation"""
     
-    def __init__(self, use_gemma: bool = True):
+    def __init__(self, use_gemma: bool = True, use_cover_images: bool = True):
         self.tech_rag = None
         self.literature_rag = None
         self.manga_rag = None
@@ -32,6 +41,9 @@ class SimpleAgentManager:
         # Configuration Gemma
         self.use_gemma = use_gemma and GEMMA_AVAILABLE
         self.gemma_manager = None
+        
+        # Configuration images de couverture
+        self.use_cover_images = use_cover_images and COVER_SERVICE_AVAILABLE
         
         # Initialiser les composants
         self._init_rag_managers()
@@ -561,6 +573,9 @@ class SimpleAgentManager:
             processing_time = time.time() - start_time
             
             if recommendations:
+                # Enrichir avec des images de couverture
+                recommendations = self._enrich_recommendations_with_images(recommendations, content_type)
+                
                 # Titre selon le type détecté
                 if content_type == 'manga':
                     title = "🎌 **Recommandations Manga**"
@@ -574,6 +589,10 @@ class SimpleAgentManager:
                 for i, rec in enumerate(recommendations, 1):
                     content = rec['content']
                     content_type_icon = "🎌" if content['type'] == 'manga' else "🦸"
+                    
+                    # Ajouter l'image de couverture si disponible
+                    if rec.get('cover_image_url'):
+                        response += f"📸 ![{content['title']}]({rec['cover_image_url']})\n\n"
                     
                     response += f"{i}. {content_type_icon} **{content['title']}**\n"
                     
@@ -692,10 +711,18 @@ Je n'ai pas trouvé de correspondance exacte pour "{query}", mais voici des sugg
             processing_time = time.time() - start_time
             
             if recommendations:
+                # Enrichir avec des images de couverture
+                recommendations = self._enrich_recommendations_with_images(recommendations, 'tech')
+                
                 response = f"🔧 **Recommandations Techniques**\n\n"
                 
                 for i, rec in enumerate(recommendations, 1):
                     book = rec['book']
+                    
+                    # Ajouter l'image de couverture si disponible
+                    if rec.get('cover_image_url'):
+                        response += f"📸 ![{book['title']}]({rec['cover_image_url']})\n\n"
+                    
                     response += f"{i}. **{book['title']}** par {book['author']}\n"
                     response += f"   ⭐ Note: {book['rating']}/5"
                     if book['price'] > 0:
@@ -738,10 +765,18 @@ Je n'ai pas trouvé de correspondance exacte pour "{query}", mais voici des sugg
             processing_time = time.time() - start_time
             
             if filtered_recommendations:
+                # Enrichir avec des images de couverture
+                filtered_recommendations = self._enrich_recommendations_with_images(filtered_recommendations, 'literature')
+                
                 response = "📚 **Recommandations Littéraires**\n\n"
                 
                 for i, rec in enumerate(filtered_recommendations, 1):
                     book = rec['book']
+                    
+                    # Ajouter l'image de couverture si disponible
+                    if rec.get('cover_image_url'):
+                        response += f"📸 ![{book['title']}]({rec['cover_image_url']})\n\n"
+                    
                     response += f"{i}. **{book['title']}** de {book['authors']}\n"
                     response += f"   ⭐ Note: {book['average_rating']}/5"
                     if book['published_year']:
@@ -885,12 +920,76 @@ Dites-moi quel auteur ou genre vous intéresse !"""
             logger.error(f"❌ Erreur Gemma, fallback: {e}")
             return self.get_agent_response(query, agent_type)
     
+    def _enrich_recommendations_with_images(self, recommendations: List[Dict], content_type: str) -> List[Dict]:
+        """Enrichit les recommandations avec des images de couverture"""
+        if not self.use_cover_images or not recommendations:
+            return recommendations
+        
+        try:
+            logger.info(f"🖼️ Enrichissement avec images pour {len(recommendations)} recommandations ({content_type})")
+            
+            for rec in recommendations:
+                # Extraire les informations selon le type de contenu
+                if content_type == 'tech':
+                    book = rec.get('book', {})
+                    title = book.get('title', '')
+                    author = book.get('author', '')
+                elif content_type == 'literature':
+                    book = rec.get('book', {})
+                    title = book.get('title', '')
+                    author = book.get('authors', '')
+                elif content_type in ['manga', 'comics']:
+                    content = rec.get('content', {})
+                    title = content.get('title', '')
+                    author = content.get('author', '')
+                    # Déterminer le type spécifique pour l'API
+                    if content.get('type') == 'manga':
+                        api_content_type = 'manga'
+                    else:
+                        api_content_type = 'comics'
+                else:
+                    continue
+                
+                # Récupérer l'image de couverture avec la stratégie optimisée
+                if title:
+                    # Déterminer le type d'API à utiliser selon l'agent
+                    if content_type == 'tech':
+                        api_type = 'book'  # Agent technique = Google Books + Open Library
+                    elif content_type == 'literature':
+                        api_type = 'book'  # Agent littérature = Google Books + Open Library
+                    elif content_type in ['manga', 'comics']:
+                        api_type = api_content_type  # Agent manga/comics = AniList prioritaire
+                    else:
+                        api_type = 'book'
+                    
+                    cover_url = cover_service.get_cover_image(
+                        title=title,
+                        author=author,
+                        content_type=api_type
+                    )
+                    
+                    # Ajouter l'URL à la recommandation
+                    rec['cover_image_url'] = cover_url
+                    
+                    if cover_url:
+                        logger.info(f"✅ Image trouvée pour: {title}")
+                    else:
+                        logger.info(f"❌ Aucune image pour: {title}")
+            
+            return recommendations
+            
+        except Exception as e:
+            logger.error(f"❌ Erreur enrichissement images: {e}")
+            return recommendations
+
     def get_system_status(self) -> Dict[str, Any]:
         """Obtient le statut du système"""
         status = {
             "simple_agents": "active",
             "gemma_available": GEMMA_AVAILABLE,
             "gemma_active": self.use_gemma,
+            "cover_service_available": COVER_SERVICE_AVAILABLE,
+            "cover_service_active": self.use_cover_images,
             "tech_rag": "available" if self.tech_rag else "unavailable",
             "literature_rag": "available" if self.literature_rag else "unavailable",
             "manga_rag": "available" if self.manga_rag else "unavailable"

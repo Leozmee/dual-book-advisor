@@ -34,7 +34,7 @@ class CoverImageService:
     
     def get_cover_image(self, title: str, author: str = "", content_type: str = "book") -> Optional[str]:
         """
-        Récupère l'URL de l'image de couverture
+        Récupère l'URL de l'image de couverture avec stratégies optimisées par agent
         
         Args:
             title: Titre de l'œuvre
@@ -59,26 +59,29 @@ class CoverImageService:
             
             logger.info(f"🔍 Recherche d'image pour: {clean_title} par {clean_author} (type: {content_type})")
             
-            # Stratégie de recherche selon le type de contenu
+            # Stratégies optimisées selon l'agent
             image_url = None
             
             if content_type == "manga":
-                # Priorité AniList pour les mangas
+                # AGENT MANGA: AniList en priorité absolue pour les mangas japonais
+                logger.info("🎌 Stratégie manga: AniList prioritaire")
                 image_url = self._search_anilist(clean_title, "MANGA")
-                if not image_url:
-                    image_url = self._search_google_books(clean_title, clean_author, "manga")
+                # Pas de fallback - AniList est la source de référence pour les mangas
             
             elif content_type == "comics":
-                # Google Books puis AniList pour comics/BD
-                image_url = self._search_google_books(clean_title, clean_author, "comics")
+                # AGENT MANGA/COMICS: AniList puis Google Books pour comics/BD
+                logger.info("🦸 Stratégie comics: AniList puis Google Books")
+                image_url = self._search_anilist(clean_title, "MANGA")  # Peut contenir des webtoons/manhwa
                 if not image_url:
-                    image_url = self._search_anilist(clean_title, "MANGA")
+                    image_url = self._search_google_books(clean_title, clean_author, "comics")
             
             else:  # books/literature
-                # Google Books puis Open Library pour livres
+                # AGENT LITTERATURE: Google Books puis Open Library (PAS d'AniList)
+                logger.info("📚 Stratégie littérature: Google Books puis Open Library")
                 image_url = self._search_google_books(clean_title, clean_author, "book")
                 if not image_url:
                     image_url = self._search_open_library(clean_title, clean_author)
+                # AniList exclu pour éviter les contaminations manga/anime
             
             # Mettre en cache le résultat
             self._cache[cache_key] = image_url
@@ -225,15 +228,15 @@ class CoverImageService:
             return None
     
     def _search_anilist(self, title: str, media_type: str = "MANGA") -> Optional[str]:
-        """Recherche via AniList GraphQL API"""
+        """Recherche via AniList GraphQL API optimisée pour mangas/anime"""
         try:
             self._wait_for_rate_limit('anilist')
             
-            # GraphQL query pour AniList
+            # GraphQL query optimisée pour AniList
             query = """
             query ($search: String, $type: MediaType) {
-                Page(page: 1, perPage: 5) {
-                    media(search: $search, type: $type, sort: POPULARITY_DESC) {
+                Page(page: 1, perPage: 8) {
+                    media(search: $search, type: $type, sort: [POPULARITY_DESC, SCORE_DESC]) {
                         title {
                             romaji
                             english
@@ -244,6 +247,10 @@ class CoverImageService:
                             large
                             medium
                         }
+                        popularity
+                        averageScore
+                        genres
+                        format
                     }
                 }
             }
@@ -260,24 +267,46 @@ class CoverImageService:
                 'variables': variables
             }
             
-            response = self.session.post(url, json=payload, timeout=10)
+            logger.debug(f"🎌 AniList query pour: {title} (type: {media_type})")
+            response = self.session.post(url, json=payload, timeout=15)
             response.raise_for_status()
             
             data = response.json()
             media_list = data.get('data', {}).get('Page', {}).get('media', [])
             
+            # Trier par pertinence (popularité + score)
             for media in media_list:
                 cover_image = media.get('coverImage', {})
                 title_info = media.get('title', {})
+                popularity = media.get('popularity', 0)
+                score = media.get('averageScore', 0)
                 
-                # Préférer les images de haute qualité
-                for size in ['extraLarge', 'large', 'medium']:
-                    if cover_image.get(size):
-                        image_url = cover_image[size]
-                        logger.info(f"🎌 AniList trouvé ({size}): {title_info.get('romaji', 'N/A')}")
-                        return image_url
+                # Vérifier la qualité du match (avec sécurité contre None)
+                romaji_title = (title_info.get('romaji') or '').lower()
+                english_title = (title_info.get('english') or '').lower()
+                native_title = (title_info.get('native') or '').lower()
+                search_title = title.lower()
+                
+                # Score de correspondance simple
+                match_score = 0
+                if search_title in romaji_title or romaji_title in search_title:
+                    match_score += 3
+                if search_title in english_title or english_title in search_title:
+                    match_score += 3
+                if search_title in native_title or native_title in search_title:
+                    match_score += 2
+                
+                # Accepter si bon match, très populaire, ou au moins un match partiel
+                if match_score >= 2 or popularity > 50000 or match_score >= 1:
+                    # Préférer les images de haute qualité
+                    for size in ['extraLarge', 'large', 'medium']:
+                        if cover_image.get(size):
+                            image_url = cover_image[size]
+                            matched_title = title_info.get('romaji') or title_info.get('english') or 'N/A'
+                            logger.info(f"🎌 AniList trouvé ({size}): {matched_title} (score: {score}, pop: {popularity})")
+                            return image_url
             
-            logger.info(f"🎌 AniList: Aucune image trouvée pour {title}")
+            logger.info(f"🎌 AniList: Aucune image pertinente trouvée pour {title}")
             return None
             
         except Exception as e:
