@@ -1,31 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Dual Book Advisor{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-bg': '#0f0f0f',
+                        'dark-surface': '#1a1a1a',
+                        'dark-elevated': '#2d2d2d',
+                        'dark-border': '#3d3d3d',
+                        'dark-text': '#e5e5e5',
+                        'dark-muted': '#a0a0a0',
+                        'accent-primary': '#10b981',
+                        'accent-secondary': '#3b82f6',
+                        'accent-purple': '#8b5cf6',
+                        'accent-orange': '#f59e0b'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-in-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                        'pulse-gentle': 'pulseGentle 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        pulseGentle: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0.7' },
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --scrollbar-width: 8px;
+            --scrollbar-track: #1a1a1a;
+            --scrollbar-thumb: #3d3d3d;
+            --scrollbar-thumb-hover: #525252;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: var(--scrollbar-width);
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+
+        /* Firefox scrollbar */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-indigo-600 text-white p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">📚 Dual Book Advisor</h1>
-            <div class="space-x-4">
-                <a href="/" class="hover:text-indigo-200">Home</a>
-                <a href="/chat/" class="hover:text-indigo-200">Chat</a>
-                <a href="/admin/" class="hover:text-indigo-200">Admin</a>
+<body class="bg-dark-bg text-dark-text min-h-screen font-inter">
+    <nav class="bg-dark-surface border-b border-dark-border sticky top-0 z-50 backdrop-blur-sm">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">DA</span>
+                    </div>
+                    <h1 class="text-xl font-semibold text-dark-text">Dual Book Advisor</h1>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <a href="/" class="text-dark-muted hover:text-dark-text transition-colors duration-200 font-medium">Home</a>
+                    <a href="/chat/" class="text-dark-muted hover:text-dark-text transition-colors duration-200 font-medium">Chat</a>
+                    <a href="/admin/" class="text-dark-muted hover:text-dark-text transition-colors duration-200 font-medium">Admin</a>
+                </div>
             </div>
         </div>
     </nav>
 
-    <main class="container mx-auto p-4">
+    <main class="flex-1">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-gray-800 text-white p-4 mt-8">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2025 Dual Book Advisor - AI-Powered Book Recommendations</p>
+    <footer class="bg-dark-surface border-t border-dark-border mt-auto">
+        <div class="container mx-auto px-6 py-6">
+            <div class="text-center">
+                <p class="text-dark-muted text-sm">&copy; 2025 Dual Book Advisor - AI-Powered Book Recommendations</p>
+            </div>
         </div>
     </footer>
 </body>

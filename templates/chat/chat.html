@@ -3,182 +3,353 @@
 {% block title %}Chat - Dual Book Advisor{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto" x-data="chatApp()">
-    <div class="flex gap-6">
-        <!-- Zone de chat principale (côté gauche) -->
-        <div class="flex-1 max-w-4xl">
-            <!-- Agent Selection -->
-            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Choose Your Agent</h2>
-        <div class="flex flex-wrap gap-4">
-            <button @click="selectAgent('coordinator')" 
-                    :class="selectedAgent === 'coordinator' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-700'"
-                    class="px-6 py-3 rounded-lg transition">
-                 Agent Coordinateur
-            </button>
-            <button @click="selectAgent('tech')" 
-                    :class="selectedAgent === 'tech' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'"
-                    class="px-6 py-3 rounded-lg transition">
-                🖥️ Tech Agent
-            </button>
-            <button @click="selectAgent('literature')" 
-                    :class="selectedAgent === 'literature' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'"
-                    class="px-6 py-3 rounded-lg transition">
-                📖 Literature Agent
-            </button>
-             <button @click="selectAgent('manga')" 
-                :class="selectedAgent === 'manga' ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'"
-                class="px-6 py-3 rounded-lg transition">
-            🎌 Manga/Comics Agent
-            </button>
-
-        </div>
-        <div class="mt-4 text-sm text-gray-600" x-show="selectedAgent">
-            <div x-show="selectedAgent === 'coordinator'">
-                💡 <strong>Agent Coordinateur:</strong> Posez n'importe quelle question et je vous dirigerai automatiquement vers l'agent approprié.
-            </div>
-            <div x-show="selectedAgent === 'tech'">
-                💡 <strong>Tech Agent:</strong> Ask about programming books, data science, software development, and technical topics.
-            </div>
-            <div x-show="selectedAgent === 'literature'">
-                💡 <strong>Literature Agent:</strong> Ask about fiction, classics, poetry, and general literature recommendations.
-            </div>
-            <div x-show="selectedAgent === 'manga'">
-            💡 <strong>Manga/Comics Agent:</strong> Ask about manga, anime, comics, BD, and graphic novels recommendations.
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Chat Messages -->
-    <div class="bg-white rounded-lg shadow-lg mb-6" style="height: 500px; overflow-y: auto;" x-ref="chatContainer">
-        <div class="p-6">
-            <div class="space-y-4" x-show="messages.length === 0">
-                <div class="text-center text-gray-500 py-8">
-                    <div class="text-4xl mb-2">💬</div>
-                    <p>Select an agent and start chatting!</p>
-                    <p class="text-sm mt-2">Try: "I want to learn Python" or "I loved Harry Potter, what's next?"</p>
-                </div>
-            </div>
-            
-            <div class="space-y-4">
-                <template x-for="message in messages" :key="message.id">
-                    <div class="flex" :class="message.sender === 'user' ? 'justify-end' : 'justify-start'">
-                        <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg"
-                             :class="message.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-900'">
-                            <div class="text-sm font-medium mb-1" x-show="message.sender !== 'user'">
-                                <span x-show="selectedAgent === 'tech'">🖥️ Tech Agent</span>
-                                <span x-show="selectedAgent === 'literature'">📖 Literature Agent</span>
+<div class="min-h-screen bg-dark-bg">
+    <div class="max-w-7xl mx-auto px-6 py-8" x-data="chatApp()">
+        <div class="flex gap-8">
+            <!-- Zone de chat principale (côté gauche) -->
+            <div class="flex-1 max-w-4xl">
+                <!-- Agent Selection -->
+                <div class="bg-dark-surface rounded-2xl border border-dark-border p-8 mb-8 animate-slide-up">
+                    <h2 class="text-2xl font-semibold text-dark-text mb-6">Choose Your Specialized Agent</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button @click="selectAgent('coordinator')" 
+                                :class="selectedAgent === 'coordinator' ? 'bg-gradient-to-br from-accent-purple to-purple-600 text-white shadow-lg shadow-purple-500/25 border-purple-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-purple/50'"
+                                class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+                                    <span class="text-2xl">🎯</span>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="font-semibold text-lg">Agent Coordinateur</h3>
+                                    <p class="text-sm opacity-70 mt-1">Intelligent routing system</p>
+                                </div>
                             </div>
-                            <div x-text="message.content"></div>
-                            <div class="text-xs opacity-75 mt-1" x-text="message.timestamp"></div>
+                        </button>
+                        
+                        <button @click="selectAgent('tech')" 
+                                :class="selectedAgent === 'tech' ? 'bg-gradient-to-br from-accent-secondary to-blue-600 text-white shadow-lg shadow-blue-500/25 border-blue-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-secondary/50'"
+                                class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+                                    <span class="text-2xl">🖥️</span>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="font-semibold text-lg">Tech Agent</h3>
+                                    <p class="text-sm opacity-70 mt-1">Programming & technical books</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button @click="selectAgent('literature')" 
+                                :class="selectedAgent === 'literature' ? 'bg-gradient-to-br from-accent-primary to-green-600 text-white shadow-lg shadow-green-500/25 border-green-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-primary/50'"
+                                class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                                    <span class="text-2xl">📚</span>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="font-semibold text-lg">Literature Agent</h3>
+                                    <p class="text-sm opacity-70 mt-1">Fiction, classics & poetry</p>
+                                </div>
+                            </div>
+                        </button>
+                        
+                        <button @click="selectAgent('manga')" 
+                                :class="selectedAgent === 'manga' ? 'bg-gradient-to-br from-accent-orange to-red-600 text-white shadow-lg shadow-red-500/25 border-red-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-orange/50'"
+                                class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                                    <span class="text-2xl">🎌</span>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="font-semibold text-lg">Manga/Comics Agent</h3>
+                                    <p class="text-sm opacity-70 mt-1">Manga, anime & graphic novels</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <!-- Agent Description -->
+                    <div class="mt-6 p-4 bg-dark-elevated rounded-xl border border-dark-border" x-show="selectedAgent" x-transition>
+                        <div x-show="selectedAgent === 'coordinator'" class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-purple-400">💡</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-dark-text mb-1">Agent Coordinateur</h4>
+                                <p class="text-dark-muted text-sm">Posez n'importe quelle question et je vous dirigerai automatiquement vers l'agent approprié.</p>
+                            </div>
+                        </div>
+                        <div x-show="selectedAgent === 'tech'" class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-blue-400">💡</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-dark-text mb-1">Tech Agent</h4>
+                                <p class="text-dark-muted text-sm">Ask about programming books, data science, software development, and technical topics.</p>
+                            </div>
+                        </div>
+                        <div x-show="selectedAgent === 'literature'" class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-green-400">💡</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-dark-text mb-1">Literature Agent</h4>
+                                <p class="text-dark-muted text-sm">Ask about fiction, classics, poetry, and general literature recommendations.</p>
+                            </div>
+                        </div>
+                        <div x-show="selectedAgent === 'manga'" class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                                <span class="text-orange-400">💡</span>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-dark-text mb-1">Manga/Comics Agent</h4>
+                                <p class="text-dark-muted text-sm">Ask about manga, anime, comics, BD, and graphic novels recommendations.</p>
+                            </div>
                         </div>
                     </div>
-                </template>
-            </div>
-
-            <!-- Loading indicator -->
-            <div x-show="isLoading" class="flex justify-start">
-                <div class="bg-gray-200 text-gray-900 px-4 py-2 rounded-lg">
-                    <div class="flex items-center space-x-2">
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                        <span>Thinking...</span>
-                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Agent Response Indicator - Juste au-dessus de la barre de recherche -->
-    <div class="bg-white rounded-lg shadow-lg mb-4 p-4" x-show="selectedAgent === 'coordinator' && (isLoading || currentRespondingAgent)">
-        <div class="flex items-center space-x-3">
-            <div x-show="isLoading" class="flex items-center space-x-2">
-                <div class="dots-loading">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                </div>
-                <span class="text-sm font-medium text-gray-600">L'agent réfléchit...</span>
-            </div>
-            <div x-show="!isLoading && currentRespondingAgent" class="flex items-center space-x-2">
-                <span x-show="currentRespondingAgent === 'tech'" class="text-blue-600">🔧 <strong>Tech Agent a répondu</strong></span>
-                <span x-show="currentRespondingAgent === 'literature'" class="text-green-600">📚 <strong>Literature Agent a répondu</strong></span>
-                <span x-show="currentRespondingAgent === 'manga'" class="text-red-600">🎌 <strong>Manga/Comics Agent a répondu</strong></span>
-            </div>
-        </div>
-    </div>
 
-    <!-- Message Input -->
-    <div class="bg-white rounded-lg shadow-lg p-6">
-        <form @submit.prevent="sendMessage()" class="flex space-x-4">
-            <input type="text" 
-                   x-model="newMessage"
-                   placeholder="Ask for book recommendations..."
-                   class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                   :disabled="!selectedAgent || isLoading">
-            <button type="submit" 
-                    :disabled="!selectedAgent || !newMessage.trim() || isLoading"
-                    class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition">
-                Send
-            </button>
-        </form>
-        <div class="mt-2 text-xs text-gray-500" x-show="!selectedAgent">
-            Please select an agent first
-            </div>
-        </div>
-        
-        <!-- Zone d'images des livres (côté droit) -->
-        <div class="w-80 flex-shrink-0">
-            <div class="bg-white rounded-lg shadow-lg p-6 sticky top-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">📚 Livres Recommandés</h3>
-                
-                <!-- Message d'état quand pas d'images -->
-                <div x-show="bookImages.length === 0" class="text-center text-gray-500 py-8">
-                    <div class="text-4xl mb-2">📖</div>
-                    <p class="text-sm">Les images des livres recommandés apparaîtront ici</p>
-                </div>
-                
-                <!-- Galerie d'images -->
-                <div class="space-y-4 max-h-96 overflow-y-auto book-gallery">
-                    <template x-for="book in bookImages" :key="book.id">
-                        <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition cursor-pointer book-item">
-                            <div class="flex items-start space-x-4">
-                                <!-- Image de couverture -->
-                                <div class="w-20 h-28 bg-gray-200 rounded overflow-hidden flex-shrink-0 shadow-sm">
-                                    <img :src="book.image" 
-                                         :alt="book.title"
-                                         class="w-full h-full object-cover"
-                                         @error="handleImageError($event, book)"
-                                         loading="lazy">
+                <!-- Chat Messages -->
+                <div class="bg-dark-surface rounded-2xl border border-dark-border mb-8 overflow-hidden" style="height: 600px;">
+                    <div class="h-full flex flex-col">
+                        <!-- Chat Header -->
+                        <div class="p-6 border-b border-dark-border bg-dark-elevated">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-full flex items-center justify-center">
+                                    <span class="text-white text-lg">🤖</span>
                                 </div>
-                                
-                                <!-- Info du livre -->
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="text-sm font-medium text-gray-900 leading-tight mb-1" x-text="book.title" style="word-wrap: break-word; hyphens: auto;"></h4>
-                                    <p class="text-xs text-gray-600 leading-tight" x-text="book.author" x-show="book.author" style="word-wrap: break-word;"></p>
-                                    <div class="flex items-center mt-1">
-                                        <span class="text-xs text-yellow-600" x-show="book.rating">
-                                            ⭐ <span x-text="book.rating"></span>
-                                        </span>
-                                        <span class="text-xs text-gray-500 ml-2" x-text="book.type" x-show="book.type"></span>
+                                <div>
+                                    <h3 class="font-semibold text-dark-text" x-text="selectedAgent ? getAgentName(selectedAgent) : 'Select an Agent'"></h3>
+                                    <p class="text-sm text-dark-muted" x-text="selectedAgent ? 'Ready to assist you' : 'Choose an agent to start chatting'"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages Container -->
+                        <div class="flex-1 p-6 overflow-y-auto" x-ref="chatContainer">
+                            <!-- Empty State -->
+                            <div class="h-full flex items-center justify-center" x-show="messages.length === 0">
+                                <div class="text-center animate-fade-in">
+                                    <div class="w-20 h-20 bg-dark-elevated rounded-full flex items-center justify-center mb-4 mx-auto">
+                                        <span class="text-4xl">💬</span>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-dark-text mb-2">Ready to explore books?</h3>
+                                    <p class="text-dark-muted mb-6">Select an agent and start your literary journey!</p>
+                                    <div class="space-y-2 text-sm text-dark-muted">
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <span class="w-2 h-2 bg-accent-primary rounded-full"></span>
+                                            <span>Try: "I want to learn Python"</span>
+                                        </div>
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <span class="w-2 h-2 bg-accent-secondary rounded-full"></span>
+                                            <span>Try: "I loved Harry Potter, what's next?"</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Messages -->
+                            <div class="space-y-6">
+                                <template x-for="message in messages" :key="message.id">
+                                    <div class="flex animate-fade-in" :class="message.sender === 'user' ? 'justify-end' : 'justify-start'">
+                                        <div class="flex items-start space-x-3 max-w-4xl">
+                                            <!-- Avatar -->
+                                            <div x-show="message.sender === 'agent'" class="w-8 h-8 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-full flex items-center justify-center flex-shrink-0">
+                                                <span class="text-white text-sm">🤖</span>
+                                            </div>
+                                            
+                                            <!-- Message Content -->
+                                            <div class="flex-1" :class="message.sender === 'user' ? 'text-right' : 'text-left'">
+                                                <div class="inline-block px-6 py-4 rounded-2xl"
+                                                     :class="message.sender === 'user' ? 'bg-gradient-to-br from-accent-secondary to-blue-600 text-white' : 'bg-dark-elevated border border-dark-border text-dark-text'">
+                                                    <!-- Agent Name -->
+                                                    <div class="text-sm font-medium mb-2 opacity-75" x-show="message.sender !== 'user'">
+                                                        <span x-show="selectedAgent === 'coordinator'">🎯 Agent Coordinateur</span>
+                                                        <span x-show="selectedAgent === 'tech'">🖥️ Tech Agent</span>
+                                                        <span x-show="selectedAgent === 'literature'">📚 Literature Agent</span>
+                                                        <span x-show="selectedAgent === 'manga'">🎌 Manga/Comics Agent</span>
+                                                    </div>
+                                                    
+                                                    <!-- Message Text -->
+                                                    <div class="whitespace-pre-wrap" x-text="message.content"></div>
+                                                    
+                                                    <!-- Timestamp -->
+                                                    <div class="text-xs opacity-50 mt-2" x-text="message.timestamp"></div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- User Avatar -->
+                                            <div x-show="message.sender === 'user'" class="w-8 h-8 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <span class="text-white text-sm">👤</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Loading indicator -->
+                            <div x-show="isLoading" class="flex justify-start animate-fade-in">
+                                <div class="flex items-start space-x-3">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-full flex items-center justify-center">
+                                        <span class="text-white text-sm">🤖</span>
+                                    </div>
+                                    <div class="bg-dark-elevated border border-dark-border px-6 py-4 rounded-2xl">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="flex space-x-1">
+                                                <div class="w-2 h-2 bg-accent-primary rounded-full animate-pulse"></div>
+                                                <div class="w-2 h-2 bg-accent-secondary rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                                                <div class="w-2 h-2 bg-accent-purple rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                                            </div>
+                                            <span class="text-dark-muted text-sm">AI is thinking...</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </template>
+                    </div>
                 </div>
-                
-                <!-- Bouton pour vider la galerie -->
-                <div x-show="bookImages.length > 0" class="mt-4 pt-4 border-t">
-                    <button @click="clearBookImages()" 
-                            class="w-full text-xs text-gray-500 hover:text-gray-700 py-2">
-                        🗑️ Vider la galerie
-                    </button>
+
+                <!-- Agent Response Indicator -->
+                <div class="bg-dark-surface rounded-2xl border border-dark-border mb-6 p-6 animate-fade-in" x-show="selectedAgent === 'coordinator' && (isLoading || currentRespondingAgent)" x-transition>
+                    <div class="flex items-center space-x-4">
+                        <div x-show="isLoading" class="flex items-center space-x-3">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-accent-primary rounded-full animate-pulse"></div>
+                                <div class="w-2 h-2 bg-accent-secondary rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-accent-purple rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                            </div>
+                            <span class="text-sm font-medium text-dark-muted">L'agent coordinateur analyse votre demande...</span>
+                        </div>
+                        <div x-show="!isLoading && currentRespondingAgent" class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                                 :class="currentRespondingAgent === 'tech' ? 'bg-blue-500/20' : currentRespondingAgent === 'literature' ? 'bg-green-500/20' : 'bg-red-500/20'">
+                                <span x-show="currentRespondingAgent === 'tech'" class="text-blue-400">🔧</span>
+                                <span x-show="currentRespondingAgent === 'literature'" class="text-green-400">📚</span>
+                                <span x-show="currentRespondingAgent === 'manga'" class="text-red-400">🎌</span>
+                            </div>
+                            <div>
+                                <span x-show="currentRespondingAgent === 'tech'" class="text-blue-400 font-semibold">Tech Agent a répondu</span>
+                                <span x-show="currentRespondingAgent === 'literature'" class="text-green-400 font-semibold">Literature Agent a répondu</span>
+                                <span x-show="currentRespondingAgent === 'manga'" class="text-red-400 font-semibold">Manga/Comics Agent a répondu</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <div class="bg-dark-surface rounded-2xl border border-dark-border p-6 animate-slide-up">
+                    <form @submit.prevent="sendMessage()" class="space-y-4">
+                        <div class="flex space-x-4">
+                            <div class="flex-1 relative">
+                                <input type="text" 
+                                       x-model="newMessage"
+                                       placeholder="Ask for book recommendations..."
+                                       class="w-full px-6 py-4 bg-dark-elevated border border-dark-border rounded-xl text-dark-text placeholder-dark-muted focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-all duration-200"
+                                       :disabled="!selectedAgent || isLoading">
+                                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-dark-muted">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8m-8 0l4-4m-4 4l4 4"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <button type="submit" 
+                                    :disabled="!selectedAgent || !newMessage.trim() || isLoading"
+                                    class="px-8 py-4 bg-gradient-to-r from-accent-primary to-accent-secondary text-white rounded-xl font-semibold 
+                                           hover:from-accent-primary/90 hover:to-accent-secondary/90 
+                                           disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed 
+                                           transition-all duration-200 transform hover:scale-105 active:scale-95
+                                           shadow-lg hover:shadow-xl">
+                                <span x-show="!isLoading">Send</span>
+                                <span x-show="isLoading" class="flex items-center space-x-2">
+                                    <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Sending...</span>
+                                </span>
+                            </button>
+                        </div>
+                        
+                        <!-- Helper Text -->
+                        <div class="flex items-center justify-between text-sm">
+                            <div class="text-dark-muted" x-show="!selectedAgent">
+                                <span class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full"></span>
+                                    <span>Please select an agent first</span>
+                                </span>
+                            </div>
+                            <div class="text-dark-muted" x-show="selectedAgent">
+                                <span class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    <span>Ready to chat with <span x-text="getAgentName(selectedAgent)"></span></span>
+                                </span>
+                            </div>
+                            <div class="text-dark-muted text-xs">
+                                Press Enter to send • <span x-text="newMessage.length"></span>/1000
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+        
+            <!-- Zone d'images des livres (côté droit) -->
+            <div class="w-80 flex-shrink-0">
+                <div class="bg-dark-surface rounded-2xl border border-dark-border p-6 sticky top-6 animate-slide-up">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-8 h-8 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-lg flex items-center justify-center">
+                            <span class="text-white text-lg">📚</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-dark-text">Book Recommendations</h3>
+                    </div>
+                    
+                    <!-- Message d'état quand pas d'images -->
+                    <div x-show="bookImages.length === 0" class="text-center py-12 animate-fade-in">
+                        <div class="w-16 h-16 bg-dark-elevated rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <span class="text-3xl">📖</span>
+                        </div>
+                        <h4 class="text-dark-text font-medium mb-2">No books yet</h4>
+                        <p class="text-dark-muted text-sm">Book covers will appear here when you get recommendations</p>
+                    </div>
+                    
+                    <!-- Galerie d'images -->
+                    <div class="space-y-4 max-h-96 overflow-y-auto book-gallery">
+                        <template x-for="book in bookImages" :key="book.id">
+                            <div class="bg-dark-elevated rounded-xl border border-dark-border p-4 hover:border-accent-primary/50 transition-all duration-200 cursor-pointer book-item group">
+                                <div class="flex items-start space-x-4">
+                                    <!-- Image de couverture -->
+                                    <div class="w-16 h-24 bg-dark-border rounded-lg overflow-hidden flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow">
+                                        <img :src="book.image" 
+                                             :alt="book.title"
+                                             class="w-full h-full object-cover"
+                                             @error="handleImageError($event, book)"
+                                             loading="lazy">
+                                    </div>
+                                    
+                                    <!-- Info du livre -->
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-sm font-semibold text-dark-text leading-tight mb-1 group-hover:text-accent-primary transition-colors" x-text="book.title" style="word-wrap: break-word; hyphens: auto;"></h4>
+                                        <p class="text-xs text-dark-muted leading-tight mb-2" x-text="book.author" x-show="book.author" style="word-wrap: break-word;"></p>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <span class="text-xs text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full" x-show="book.rating">
+                                                ⭐ <span x-text="book.rating"></span>
+                                            </span>
+                                            <span class="text-xs bg-dark-border text-dark-muted px-2 py-1 rounded-full" x-text="book.type" x-show="book.type"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    
+                    <!-- Bouton pour vider la galerie -->
+                    <div x-show="bookImages.length > 0" class="mt-6 pt-4 border-t border-dark-border">
+                        <button @click="clearBookImages()" 
+                                class="w-full text-sm text-dark-muted hover:text-red-400 py-3 px-4 rounded-xl bg-dark-elevated hover:bg-red-500/10 transition-colors duration-200 flex items-center justify-center space-x-2">
+                            <span>🗑️</span>
+                            <span>Clear Gallery</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
 <script>
 function chatApp() {
@@ -196,6 +367,16 @@ function chatApp() {
             const agent = urlParams.get('agent');
             if (agent === 'tech' || agent === 'literature' || agent === 'manga' || agent === 'coordinator') {
                 this.selectedAgent = agent;
+            }
+        },
+
+        getAgentName(agent) {
+            switch(agent) {
+                case 'coordinator': return 'Agent Coordinateur';
+                case 'tech': return 'Tech Agent';
+                case 'literature': return 'Literature Agent';
+                case 'manga': return 'Manga/Comics Agent';
+                default: return 'Unknown Agent';
             }
         },
         
@@ -430,47 +611,10 @@ function chatApp() {
 </script>
 
 <style>
-.dots-loading {
-    display: flex;
-    gap: 4px;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: #6B7280;
-    animation: dot-flashing 1.4s infinite linear alternate;
-    margin-right: 4px;
-}
-
-.dot:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.dot:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-@keyframes dot-flashing {
-    0% {
-        opacity: 0.2;
-        transform: scale(0.8);
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    100% {
-        opacity: 0.2;
-        transform: scale(0.8);
-    }
-}
-
-/* Styles pour la galerie d'images */
+/* Styles pour la galerie d'images modernisée */
 .book-gallery {
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 #f1f5f9;
+    scrollbar-color: #3d3d3d #1a1a1a;
 }
 
 .book-gallery::-webkit-scrollbar {
@@ -478,17 +622,17 @@ function chatApp() {
 }
 
 .book-gallery::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #1a1a1a;
     border-radius: 3px;
 }
 
 .book-gallery::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #3d3d3d;
     border-radius: 3px;
 }
 
 .book-gallery::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+    background: #525252;
 }
 
 /* Animation d'apparition pour les nouvelles images */
@@ -504,23 +648,29 @@ function chatApp() {
 }
 
 .book-item {
-    animation: fadeInUp 0.3s ease-out;
+    animation: fadeInUp 0.4s ease-out;
 }
 
 /* Style pour les images en erreur */
 .image-error {
-    opacity: 0.7;
-    filter: grayscale(20%);
+    opacity: 0.6;
+    filter: grayscale(30%);
 }
 
 /* Amélioration de l'affichage responsive */
+@media (max-width: 1280px) {
+    .max-w-7xl {
+        max-width: 6xl;
+    }
+}
+
 @media (max-width: 1024px) {
     .max-w-7xl {
-        max-width: 4xl;
+        max-width: 5xl;
     }
     
     .w-80 {
-        width: 16rem;
+        width: 18rem;
     }
 }
 
@@ -536,6 +686,69 @@ function chatApp() {
     .sticky {
         position: relative;
     }
+    
+    .px-6 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .py-8 {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .gap-8 {
+        gap: 1rem;
+    }
+    
+    .p-8 {
+        padding: 1.5rem;
+    }
+    
+    .p-6 {
+        padding: 1rem;
+    }
+}
+
+/* Amélioration des focus states */
+input:focus, button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Animation pour les messages */
+.message-fade-in {
+    animation: messageSlide 0.5s ease-out;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Smooth transitions pour tous les éléments */
+* {
+    transition: all 0.2s ease;
+}
+
+/* Background patterns subtils */
+.pattern-dots {
+    background-image: radial-gradient(circle, #2d2d2d 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.pattern-grid {
+    background-image: linear-gradient(rgba(45, 45, 45, 0.1) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(45, 45, 45, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
 }
 </style>
 {% endblock %}
