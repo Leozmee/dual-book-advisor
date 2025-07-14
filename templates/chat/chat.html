@@ -10,7 +10,7 @@
             <div class="flex-1 max-w-4xl">
                 <!-- Agent Selection -->
                 <div class="bg-dark-surface rounded-2xl border border-dark-border p-8 mb-8 animate-slide-up">
-                    <h2 class="text-2xl font-semibold text-dark-text mb-6">Choose Your Specialized Agent</h2>
+                    <h2 class="text-2xl font-semibold text-dark-text mb-6">Choisissez votre agent</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button @click="selectAgent('coordinator')" 
                                 :class="selectedAgent === 'coordinator' ? 'bg-gradient-to-br from-accent-purple to-purple-600 text-white shadow-lg shadow-purple-500/25 border-purple-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-purple/50'"
@@ -34,7 +34,7 @@
                                     <span class="text-2xl">🖥️</span>
                                 </div>
                                 <div class="text-left">
-                                    <h3 class="font-semibold text-lg">Tech Agent</h3>
+                                    <h3 class="font-semibold text-lg">🖥️ Agent Tech</h3>
                                     <p class="text-sm opacity-70 mt-1">Programming & technical books</p>
                                 </div>
                             </div>
@@ -48,7 +48,7 @@
                                     <span class="text-2xl">📚</span>
                                 </div>
                                 <div class="text-left">
-                                    <h3 class="font-semibold text-lg">Literature Agent</h3>
+                                    <h3 class="font-semibold text-lg">📖 Agent littéraire</h3>
                                     <p class="text-sm opacity-70 mt-1">Fiction, classics & poetry</p>
                                 </div>
                             </div>
@@ -62,7 +62,7 @@
                                     <span class="text-2xl">🎌</span>
                                 </div>
                                 <div class="text-left">
-                                    <h3 class="font-semibold text-lg">Manga/Comics Agent</h3>
+                                    <h3 class="font-semibold text-lg">🎌 Agent BD/Manga</h3>
                                     <p class="text-sm opacity-70 mt-1">Manga, anime & graphic novels</p>
                                 </div>
                             </div>
@@ -85,8 +85,8 @@
                                 <span class="text-blue-400">💡</span>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-dark-text mb-1">Tech Agent</h4>
-                                <p class="text-dark-muted text-sm">Ask about programming books, data science, software development, and technical topics.</p>
+                                <h4 class="font-semibold text-dark-text mb-1">Agent Tech</h4>
+                                <p class="text-dark-muted text-sm">Renseignez-vous sur les livres de programmation, la science des données, les sujets techniques.</p>
                             </div>
                         </div>
                         <div x-show="selectedAgent === 'literature'" class="flex items-start space-x-3">
@@ -94,8 +94,8 @@
                                 <span class="text-green-400">💡</span>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-dark-text mb-1">Literature Agent</h4>
-                                <p class="text-dark-muted text-sm">Ask about fiction, classics, poetry, and general literature recommendations.</p>
+                                <h4 class="font-semibold text-dark-text mb-1">Agent littéraire</h4>
+                                <p class="text-dark-muted text-sm">Recommandations et explications en matière de fiction, de classiques littéraires, de poésie.</p>
                             </div>
                         </div>
                         <div x-show="selectedAgent === 'manga'" class="flex items-start space-x-3">
@@ -103,8 +103,8 @@
                                 <span class="text-orange-400">💡</span>
                             </div>
                             <div>
-                                <h4 class="font-semibold text-dark-text mb-1">Manga/Comics Agent</h4>
-                                <p class="text-dark-muted text-sm">Ask about manga, anime, comics, BD, and graphic novels recommendations.</p>
+                                <h4 class="font-semibold text-dark-text mb-1">Agent BD/Manga</h4>
+                                <p class="text-dark-muted text-sm">Recommandations et explications en matière de romans graphiques (Mangas, BD)</p>
                             </div>
                         </div>
                     </div>
@@ -121,8 +121,8 @@
                                     <span class="text-white text-lg">🤖</span>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-dark-text" x-text="selectedAgent ? getAgentName(selectedAgent) : 'Select an Agent'"></h3>
-                                    <p class="text-sm text-dark-muted" x-text="selectedAgent ? 'Ready to assist you' : 'Choose an agent to start chatting'"></p>
+                                    <h3 class="font-semibold text-dark-text" x-text="selectedAgent ? getAgentName(selectedAgent) : 'Sélectionnez un Agent'"></h3>
+                                    <p class="text-sm text-dark-muted" x-text="selectedAgent ? 'Prêt à vous aider' : 'Choisissez un agent pour commencer à discuter'"></p>
                                 </div>
                             </div>
                         </div>
@@ -135,16 +135,16 @@
                                     <div class="w-20 h-20 bg-dark-elevated rounded-full flex items-center justify-center mb-4 mx-auto">
                                         <span class="text-4xl">💬</span>
                                     </div>
-                                    <h3 class="text-xl font-semibold text-dark-text mb-2">Ready to explore books?</h3>
-                                    <p class="text-dark-muted mb-6">Select an agent and start your literary journey!</p>
+                                    <h3 class="text-xl font-semibold text-dark-text mb-2">Prêt à explorer des livres ?</h3>
+                                    <p class="text-dark-muted mb-6">Sélectionnez un agent et commencez à discuter !</p>
                                     <div class="space-y-2 text-sm text-dark-muted">
                                         <div class="flex items-center justify-center space-x-2">
                                             <span class="w-2 h-2 bg-accent-primary rounded-full"></span>
-                                            <span>Try: "I want to learn Python"</span>
+                                            <span>« Je veux apprendre Python » ou « J'ai adoré Harry Potter, quelle est la prochaine étape ? »</span>
                                         </div>
                                         <div class="flex items-center justify-center space-x-2">
                                             <span class="w-2 h-2 bg-accent-secondary rounded-full"></span>
-                                            <span>Try: "I loved Harry Potter, what's next?"</span>
+                                            <span></span>
                                         </div>
                                     </div>
                                 </div>
@@ -167,9 +167,9 @@
                                                     <!-- Agent Name -->
                                                     <div class="text-sm font-medium mb-2 opacity-75" x-show="message.sender !== 'user'">
                                                         <span x-show="selectedAgent === 'coordinator'">🎯 Agent Coordinateur</span>
-                                                        <span x-show="selectedAgent === 'tech'">🖥️ Tech Agent</span>
-                                                        <span x-show="selectedAgent === 'literature'">📚 Literature Agent</span>
-                                                        <span x-show="selectedAgent === 'manga'">🎌 Manga/Comics Agent</span>
+                                                        <span x-show="selectedAgent === 'tech'">🖥️ Agent Tech</span>
+                                                        <span x-show="selectedAgent === 'literature'">📚 Agent littéraire</span>
+                                                        <span x-show="selectedAgent === 'manga'">🎌 Agent BD/Manga</span>
                                                     </div>
                                                     
                                                     <!-- Message Text -->
@@ -202,7 +202,7 @@
                                                 <div class="w-2 h-2 bg-accent-secondary rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
                                                 <div class="w-2 h-2 bg-accent-purple rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
                                             </div>
-                                            <span class="text-dark-muted text-sm">AI is thinking...</span>
+                                            <span class="text-dark-muted text-sm">Réfléchis...</span>
                                         </div>
                                     </div>
                                 </div>
@@ -230,9 +230,9 @@
                                 <span x-show="currentRespondingAgent === 'manga'" class="text-red-400">🎌</span>
                             </div>
                             <div>
-                                <span x-show="currentRespondingAgent === 'tech'" class="text-blue-400 font-semibold">Tech Agent a répondu</span>
-                                <span x-show="currentRespondingAgent === 'literature'" class="text-green-400 font-semibold">Literature Agent a répondu</span>
-                                <span x-show="currentRespondingAgent === 'manga'" class="text-red-400 font-semibold">Manga/Comics Agent a répondu</span>
+                                <span x-show="currentRespondingAgent === 'tech'" class="text-blue-400 font-semibold">Agent Tech a répondu</span>
+                                <span x-show="currentRespondingAgent === 'literature'" class="text-green-400 font-semibold">Agent littéraire a répondu</span>
+                                <span x-show="currentRespondingAgent === 'manga'" class="text-red-400 font-semibold">Agent BD/Manga a répondu</span>
                             </div>
                         </div>
                     </div>
@@ -245,7 +245,7 @@
                             <div class="flex-1 relative">
                                 <input type="text" 
                                        x-model="newMessage"
-                                       placeholder="Ask for book recommendations..."
+                                       placeholder="Demandez des recommandations de livres..."
                                        class="w-full px-6 py-4 bg-dark-elevated border border-dark-border rounded-xl text-dark-text placeholder-dark-muted focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-all duration-200"
                                        :disabled="!selectedAgent || isLoading">
                                 <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-dark-muted">
@@ -261,10 +261,10 @@
                                            disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed 
                                            transition-all duration-200 transform hover:scale-105 active:scale-95
                                            shadow-lg hover:shadow-xl">
-                                <span x-show="!isLoading">Send</span>
+                                <span x-show="!isLoading">Envoyer</span>
                                 <span x-show="isLoading" class="flex items-center space-x-2">
                                     <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    <span>Sending...</span>
+                                    <span>Envoi...</span>
                                 </span>
                             </button>
                         </div>
@@ -274,17 +274,17 @@
                             <div class="text-dark-muted" x-show="!selectedAgent">
                                 <span class="flex items-center space-x-2">
                                     <span class="w-2 h-2 bg-red-500 rounded-full"></span>
-                                    <span>Please select an agent first</span>
+                                    <span>Veuillez d'abord sélectionner un agent</span>
                                 </span>
                             </div>
                             <div class="text-dark-muted" x-show="selectedAgent">
                                 <span class="flex items-center space-x-2">
                                     <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    <span>Ready to chat with <span x-text="getAgentName(selectedAgent)"></span></span>
+                                    <span>Prêt à discuter avec <span x-text="getAgentName(selectedAgent)"></span></span>
                                 </span>
                             </div>
                             <div class="text-dark-muted text-xs">
-                                Press Enter to send • <span x-text="newMessage.length"></span>/1000
+                                Appuyez sur Entrée pour envoyer • <span x-text="newMessage.length"></span>/1000
                             </div>
                         </div>
                     </form>
@@ -298,7 +298,7 @@
                         <div class="w-8 h-8 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-lg flex items-center justify-center">
                             <span class="text-white text-lg">📚</span>
                         </div>
-                        <h3 class="text-lg font-semibold text-dark-text">Book Recommendations</h3>
+                        <h3 class="text-lg font-semibold text-dark-text">Recommandations de livres</h3>
                     </div>
                     
                     <!-- Message d'état quand pas d'images -->
@@ -306,8 +306,8 @@
                         <div class="w-16 h-16 bg-dark-elevated rounded-full flex items-center justify-center mb-4 mx-auto">
                             <span class="text-3xl">📖</span>
                         </div>
-                        <h4 class="text-dark-text font-medium mb-2">No books yet</h4>
-                        <p class="text-dark-muted text-sm">Book covers will appear here when you get recommendations</p>
+                        <h4 class="text-dark-text font-medium mb-2">Aucun livre pour le moment</h4>
+                        <p class="text-dark-muted text-sm">Les couvertures de livres apparaîtront ici lorsque vous recevrez des recommandations</p>
                     </div>
                     
                     <!-- Galerie d'images -->
@@ -345,11 +345,381 @@
                         <button @click="clearBookImages()" 
                                 class="w-full text-sm text-dark-muted hover:text-red-400 py-3 px-4 rounded-xl bg-dark-elevated hover:bg-red-500/10 transition-colors duration-200 flex items-center justify-center space-x-2">
                             <span>🗑️</span>
-                            <span>Clear Gallery</span>
+                            <span>Vider la galerie</span>
                         </button>
                     </div>
                 </div>
             </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Bibliothèque en footer -->
+<div class="w-full mt-16">
+    <!-- Livres alignés horizontalement directement sur le fond noir -->
+    <div class="flex items-end justify-center space-x-px h-24 overflow-hidden w-full px-0">
+                <!-- Livre 1 -->
+                <div class="book-spine bg-gradient-to-r from-slate-500 to-slate-700 w-3 h-8 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-300/30"></div>
+                </div>
+                
+                <!-- Livre 2 -->
+                <div class="book-spine bg-gradient-to-r from-stone-500 to-stone-700 w-6 h-23 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-300/30"></div>
+                </div>
+                
+                <!-- Livre 3 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-500 to-neutral-700 w-4 h-11 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-300/30"></div>
+                </div>
+                
+                <!-- Livre 4 -->
+                <div class="book-spine bg-gradient-to-r from-gray-500 to-gray-700 w-7 h-19 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-300/30"></div>
+                </div>
+                
+                <!-- Livre 5 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-500 to-zinc-700 w-3 h-9 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-300/30"></div>
+                </div>
+                
+                <!-- Livre 6 -->
+                <div class="book-spine bg-gradient-to-r from-slate-600 to-slate-800 w-5 h-24 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-400/30"></div>
+                </div>
+                
+                <!-- Livre 7 -->
+                <div class="book-spine bg-gradient-to-r from-stone-600 to-stone-800 w-4 h-7 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-400/30"></div>
+                </div>
+                
+                <!-- Livre 8 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-600 to-neutral-800 w-8 h-18 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-400/30"></div>
+                </div>
+                
+                <!-- Livre 9 -->
+                <div class="book-spine bg-gradient-to-r from-gray-600 to-gray-800 w-3 h-12 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-400/30"></div>
+                </div>
+                
+                <!-- Livre 10 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-600 to-zinc-800 w-6 h-21 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-400/30"></div>
+                </div>
+                
+                <!-- Livre 11 -->
+                <div class="book-spine bg-gradient-to-r from-slate-400 to-slate-600 w-4 h-10 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-200/30"></div>
+                </div>
+                
+                <!-- Livre 12 -->
+                <div class="book-spine bg-gradient-to-r from-stone-400 to-stone-600 w-7 h-22 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-200/30"></div>
+                </div>
+                
+                <!-- Livre 13 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-400 to-neutral-600 w-3 h-13 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-200/30"></div>
+                </div>
+                
+                <!-- Livre 14 -->
+                <div class="book-spine bg-gradient-to-r from-gray-400 to-gray-600 w-5 h-16 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-200/30"></div>
+                </div>
+                
+                <!-- Livre 15 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-400 to-zinc-600 w-4 h-20 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-200/30"></div>
+                </div>
+                
+                <!-- Livre 16 -->
+                <div class="book-spine bg-gradient-to-r from-slate-300 to-slate-500 w-8 h-14 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-100/30"></div>
+                </div>
+                
+                <!-- Livre 17 -->
+                <div class="book-spine bg-gradient-to-r from-stone-300 to-stone-500 w-3 h-17 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-100/30"></div>
+                </div>
+                
+                <!-- Livre 18 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-300 to-neutral-500 w-6 h-9 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-100/30"></div>
+                </div>
+                
+                <!-- Livre 19 -->
+                <div class="book-spine bg-gradient-to-r from-gray-300 to-gray-500 w-5 h-23 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-100/30"></div>
+                </div>
+                
+                <!-- Livre 20 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-300 to-zinc-500 w-4 h-15 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-100/30"></div>
+                </div>
+                
+                <!-- Livre 21 -->
+                <div class="book-spine bg-gradient-to-r from-slate-600 to-slate-800 w-3 h-14 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-400/30"></div>
+                </div>
+                
+                <!-- Livre 22 -->
+                <div class="book-spine bg-gradient-to-r from-stone-600 to-stone-800 w-6 h-23 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-400/30"></div>
+                </div>
+                
+                <!-- Livre 23 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-600 to-neutral-800 w-4 h-12 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-400/30"></div>
+                </div>
+                
+                <!-- Livre 24 -->
+                <div class="book-spine bg-gradient-to-r from-gray-600 to-gray-800 w-7 h-19 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-400/30"></div>
+                </div>
+                
+                <!-- Livre 25 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-600 to-zinc-800 w-3 h-13 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-400/30"></div>
+                </div>
+                
+                <!-- Livre 26 -->
+                <div class="book-spine bg-gradient-to-r from-slate-500 to-slate-700 w-5 h-21 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-300/30"></div>
+                </div>
+                
+                <!-- Livre 27 -->
+                <div class="book-spine bg-gradient-to-r from-stone-500 to-stone-700 w-4 h-11 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-300/30"></div>
+                </div>
+                
+                <!-- Livre 28 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-500 to-neutral-700 w-8 h-18 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-300/30"></div>
+                </div>
+                
+                <!-- Livre 29 -->
+                <div class="book-spine bg-gradient-to-r from-gray-500 to-gray-700 w-3 h-10 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-300/30"></div>
+                </div>
+                
+                <!-- Livre 30 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-500 to-zinc-700 w-6 h-22 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-300/30"></div>
+                </div>
+                
+                <!-- Livre 31 -->
+                <div class="book-spine bg-gradient-to-r from-slate-400 to-slate-600 w-4 h-9 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-200/30"></div>
+                </div>
+                
+                <!-- Livre 32 -->
+                <div class="book-spine bg-gradient-to-r from-stone-400 to-stone-600 w-7 h-20 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-200/30"></div>
+                </div>
+                
+                <!-- Livre 33 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-400 to-neutral-600 w-3 h-8 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-200/30"></div>
+                </div>
+                
+                <!-- Livre 34 -->
+                <div class="book-spine bg-gradient-to-r from-gray-400 to-gray-600 w-5 h-24 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-200/30"></div>
+                </div>
+                
+                <!-- Livre 35 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-400 to-zinc-600 w-4 h-7 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-200/30"></div>
+                </div>
+                
+                <!-- Livre 36 -->
+                <div class="book-spine bg-gradient-to-r from-slate-300 to-slate-500 w-5 h-16 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-100/30"></div>
+                </div>
+                
+                <!-- Livre 37 -->
+                <div class="book-spine bg-gradient-to-r from-stone-300 to-stone-500 w-3 h-11 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-100/30"></div>
+                </div>
+                
+                <!-- Livre 38 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-300 to-neutral-500 w-6 h-22 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-100/30"></div>
+                </div>
+                
+                <!-- Livre 39 -->
+                <div class="book-spine bg-gradient-to-r from-gray-300 to-gray-500 w-4 h-9 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-100/30"></div>
+                </div>
+                
+                <!-- Livre 40 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-300 to-zinc-500 w-7 h-19 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-100/30"></div>
+                </div>
+                
+                <!-- Livre 41 -->
+                <div class="book-spine bg-gradient-to-r from-slate-600 to-slate-800 w-3 h-8 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-400/30"></div>
+                </div>
+                
+                <!-- Livre 42 -->
+                <div class="book-spine bg-gradient-to-r from-stone-600 to-stone-800 w-5 h-21 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-400/30"></div>
+                </div>
+                
+                <!-- Livre 43 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-600 to-neutral-800 w-4 h-12 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-400/30"></div>
+                </div>
+                
+                <!-- Livre 44 -->
+                <div class="book-spine bg-gradient-to-r from-gray-600 to-gray-800 w-8 h-18 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-400/30"></div>
+                </div>
+                
+                <!-- Livre 45 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-600 to-zinc-800 w-3 h-10 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-500/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-400/30"></div>
+                </div>
+                
+                <!-- Livre 46 -->
+                <div class="book-spine bg-gradient-to-r from-slate-500 to-slate-700 w-6 h-23 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-300/30"></div>
+                </div>
+                
+                <!-- Livre 47 -->
+                <div class="book-spine bg-gradient-to-r from-stone-500 to-stone-700 w-4 h-7 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-300/30"></div>
+                </div>
+                
+                <!-- Livre 48 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-500 to-neutral-700 w-5 h-20 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-300/30"></div>
+                </div>
+                
+                <!-- Livre 49 -->
+                <div class="book-spine bg-gradient-to-r from-gray-500 to-gray-700 w-3 h-14 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-300/30"></div>
+                </div>
+                
+                <!-- Livre 50 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-500 to-zinc-700 w-7 h-17 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-400/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-300/30"></div>
+                </div>
+                
+                <!-- Livre 51 -->
+                <div class="book-spine bg-gradient-to-r from-slate-400 to-slate-600 w-4 h-11 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-200/30"></div>
+                </div>
+                
+                <!-- Livre 52 -->
+                <div class="book-spine bg-gradient-to-r from-stone-400 to-stone-600 w-6 h-24 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-200/30"></div>
+                </div>
+                
+                <!-- Livre 53 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-400 to-neutral-600 w-3 h-9 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-200/30"></div>
+                </div>
+                
+                <!-- Livre 54 -->
+                <div class="book-spine bg-gradient-to-r from-gray-400 to-gray-600 w-5 h-16 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-gray-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-gray-200/30"></div>
+                </div>
+                
+                <!-- Livre 55 -->
+                <div class="book-spine bg-gradient-to-r from-zinc-400 to-zinc-600 w-4 h-13 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-zinc-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-zinc-200/30"></div>
+                </div>
+                
+                <!-- Livre 56 -->
+                <div class="book-spine bg-gradient-to-r from-slate-300 to-slate-500 w-8 h-19 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-100/30"></div>
+                </div>
+                
+                <!-- Livre 57 -->
+                <div class="book-spine bg-gradient-to-r from-stone-300 to-stone-500 w-3 h-8 rounded-t-sm shadow-md transform rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-200/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-100/30"></div>
+                </div>
+                
+                <!-- Livre 58 -->
+                <div class="book-spine bg-gradient-to-r from-slate-400 to-slate-600 w-6 h-22 rounded-t-sm shadow-md transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-slate-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-slate-200/30"></div>
+                </div>
+                
+                <!-- Livre 59 -->
+                <div class="book-spine bg-gradient-to-r from-stone-400 to-stone-600 w-4 h-15 rounded-t-sm shadow-md transform rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-stone-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-stone-200/30"></div>
+                </div>
+                
+                <!-- Livre 60 -->
+                <div class="book-spine bg-gradient-to-r from-neutral-400 to-neutral-600 w-5 h-12 rounded-t-sm shadow-md transform -rotate-1 hover:rotate-0 transition-transform duration-300 cursor-pointer relative">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neutral-300/20 to-transparent rounded-t-sm"></div>
+                    <div class="absolute bottom-1 left-0 right-0 h-px bg-neutral-200/30"></div>
+                </div>
+    </div>
+</div>
 
 <script>
 function chatApp() {
@@ -373,9 +743,9 @@ function chatApp() {
         getAgentName(agent) {
             switch(agent) {
                 case 'coordinator': return 'Agent Coordinateur';
-                case 'tech': return 'Tech Agent';
-                case 'literature': return 'Literature Agent';
-                case 'manga': return 'Manga/Comics Agent';
+                case 'tech': return 'Agent Tech';
+                case 'literature': return 'Agent littéraire';
+                case 'manga': return 'Agent BD/Manga';
                 default: return 'Unknown Agent';
             }
         },
@@ -457,11 +827,11 @@ function chatApp() {
                     
                     this.addMessage('agent', contentWithoutImages);
                 } else {
-                    this.addMessage('agent', 'Sorry, I encountered an error. Please try again.');
+                    this.addMessage('agent', 'Désolé, j\'ai rencontré une erreur. Veuillez réessayer.');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                this.addMessage('agent', 'Sorry, I cannot connect to the server right now.');
+                this.addMessage('agent', 'Désolé, je ne peux pas me connecter au serveur pour le moment.');
             } finally {
                 this.isLoading = false;
                 // L'indicateur reste visible de manière permanente
@@ -737,6 +1107,133 @@ input:focus, button:focus {
 /* Smooth transitions pour tous les éléments */
 * {
     transition: all 0.2s ease;
+}
+
+/* Styles pour la bibliothèque */
+.book-spine {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: all 0.3s ease;
+    box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.book-spine:hover {
+    transform: translateY(-2px) rotate(0deg) !important;
+    box-shadow: 
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+        0 6px 16px rgba(0, 0, 0, 0.4),
+        0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.book-spine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 20%,
+        transparent 40%,
+        transparent 60%,
+        rgba(0, 0, 0, 0.1) 80%,
+        rgba(0, 0, 0, 0.2) 100%
+    );
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.book-spine::after {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 60%;
+    background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(255, 255, 255, 0.2) 20%,
+        rgba(255, 255, 255, 0.1) 80%,
+        transparent 100%
+    );
+    border-radius: 1px;
+}
+
+/* Hauteurs personnalisées pour les livres */
+.h-7 { height: 1.75rem; }
+.h-8 { height: 2rem; }
+.h-9 { height: 2.25rem; }
+.h-10 { height: 2.5rem; }
+.h-11 { height: 2.75rem; }
+.h-12 { height: 3rem; }
+.h-13 { height: 3.25rem; }
+.h-14 { height: 3.5rem; }
+.h-15 { height: 3.75rem; }
+.h-16 { height: 4rem; }
+.h-17 { height: 4.25rem; }
+.h-18 { height: 4.5rem; }
+.h-19 { height: 4.75rem; }
+.h-20 { height: 5rem; }
+.h-21 { height: 5.25rem; }
+.h-22 { height: 5.5rem; }
+.h-23 { height: 5.75rem; }
+.h-24 { height: 6rem; }
+.h-26 { height: 6.5rem; }
+.h-28 { height: 7rem; }
+.h-30 { height: 7.5rem; }
+.h-32 { height: 8rem; }
+.h-34 { height: 8.5rem; }
+.h-36 { height: 9rem; }
+.h-37 { height: 9.25rem; }
+.h-38 { height: 9.5rem; }
+
+/* Animation de "lecture" au survol */
+@keyframes bookPull {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+    100% { transform: translateY(0); }
+}
+
+.book-spine:hover {
+    animation: bookPull 0.4s ease-in-out;
+}
+
+/* Effet de profondeur pour l'étagère */
+.shelf-depth {
+    position: relative;
+}
+
+.shelf-depth::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.4) 0%,
+        rgba(0, 0, 0, 0.2) 50%,
+        transparent 100%
+    );
+    border-radius: 0 0 8px 8px;
+}
+
+/* Texture bois pour l'étagère */
+.wood-texture {
+    background-image: 
+        linear-gradient(90deg, rgba(139, 69, 19, 0.1) 0%, transparent 50%, rgba(139, 69, 19, 0.1) 100%),
+        linear-gradient(0deg, rgba(139, 69, 19, 0.05) 0%, transparent 100%);
+    background-size: 20px 100%, 100% 4px;
 }
 
 /* Background patterns subtils */
