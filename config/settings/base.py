@@ -263,8 +263,8 @@ LANGCHAIN_MODEL = os.environ.get('LANGCHAIN_MODEL', 'gpt-3.5-turbo')
 # Configuration LangChain
 LANGCHAIN_CONFIG = {
     # Provider: 'openai', 'anthropic', 'ollama'
-    'provider': 'openai',  # Changez selon vos besoins
-    'model': 'gpt-3.5-turbo',
+    'provider': 'ollama',  # Utiliser Ollama/Llama par défaut
+    'model': 'llama3.2:3b',  # Modèle Llama 3.2 3B
     
     # Clés API (utilisez les variables d'environnement)
     'openai_api_key': os.getenv('OPENAI_API_KEY'),
