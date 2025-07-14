@@ -8,6 +8,31 @@
         <div class="flex gap-8">
             <!-- Zone de chat principale (côté gauche) -->
             <div class="flex-1 max-w-4xl">
+                <!-- System Selection -->
+                <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-6 animate-slide-up shadow-lg">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Système d'agents IA</h2>
+                    <div class="flex space-x-4">
+                        <button @click="selectSystem('gemma')" 
+                                :class="selectedSystem === 'gemma' ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg border-purple-400' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200'"
+                                class="flex-1 p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105">
+                            <div class="text-center">
+                                <span class="text-2xl mb-2 block">🤖</span>
+                                <h3 class="font-semibold">Gemma 2B</h3>
+                                <p class="text-sm opacity-75 mt-1">Système rapide et léger</p>
+                            </div>
+                        </button>
+                        <button @click="selectSystem('langchain')" 
+                                :class="selectedSystem === 'langchain' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg border-blue-400' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200'"
+                                class="flex-1 p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105">
+                            <div class="text-center">
+                                <span class="text-2xl mb-2 block">🦙</span>
+                                <h3 class="font-semibold">LangChain Llama</h3>
+                                <p class="text-sm opacity-75 mt-1">Système avancé avec Llama 3.2</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Agent Selection -->
                 <div class="bg-white rounded-2xl border border-gray-200 p-8 mb-8 animate-slide-up shadow-lg">
                     <h2 class="text-2xl font-semibold text-gray-900 mb-6">Choisissez votre agent</h2>
@@ -110,6 +135,27 @@
                     </div>
                 </div>
 
+
+                <!-- Model Indicator -->
+                <div x-show="currentModel" class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 animate-fade-in">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                             :class="currentModel === 'llama' ? 'bg-blue-100' : 'bg-purple-100'">
+                            <span x-show="currentModel === 'llama'" class="text-blue-600">🦙</span>
+                            <span x-show="currentModel === 'gemma'" class="text-purple-600">🤖</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">
+                                <span x-show="currentModel === 'llama'">Réponse générée par Llama 3.2 3B</span>
+                                <span x-show="currentModel === 'gemma'">Réponse générée par Gemma 2B</span>
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                <span x-show="currentModel === 'llama'">Système LangChain avec RAG</span>
+                                <span x-show="currentModel === 'gemma'">Système optimisé rapide</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Chat Messages -->
                 <div class="bg-white rounded-2xl border border-gray-200 mb-8 overflow-hidden shadow-lg" style="height: 600px;">
@@ -247,7 +293,7 @@
                                        x-model="newMessage"
                                        placeholder="Demandez des recommandations de livres..."
                                        class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                                       :disabled="!selectedAgent || isLoading">
+                                       :disabled="!selectedSystem || !selectedAgent || isLoading">
                                 <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8m-8 0l4-4m-4 4l4 4"></path>
@@ -255,7 +301,7 @@
                                 </div>
                             </div>
                             <button type="submit" 
-                                    :disabled="!selectedAgent || !newMessage.trim() || isLoading"
+                                    :disabled="!selectedSystem || !selectedAgent || !newMessage.trim() || isLoading"
                                     class="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold 
                                            hover:from-indigo-600 hover:to-purple-700 
                                            disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed 
@@ -271,19 +317,25 @@
                         
                         <!-- Helper Text -->
                         <div class="flex items-center justify-between text-sm">
-                            <div class="text-dark-muted" x-show="!selectedAgent">
+                            <div class="text-gray-500" x-show="!selectedSystem">
                                 <span class="flex items-center space-x-2">
                                     <span class="w-2 h-2 bg-red-500 rounded-full"></span>
-                                    <span>Veuillez d'abord sélectionner un agent</span>
+                                    <span>Veuillez d'abord sélectionner un système</span>
                                 </span>
                             </div>
-                            <div class="text-dark-muted" x-show="selectedAgent">
+                            <div class="text-gray-500" x-show="selectedSystem && !selectedAgent">
+                                <span class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                    <span>Sélectionnez maintenant un agent</span>
+                                </span>
+                            </div>
+                            <div class="text-gray-500" x-show="selectedSystem && selectedAgent">
                                 <span class="flex items-center space-x-2">
                                     <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                                    <span>Prêt à discuter avec <span x-text="getAgentName(selectedAgent)"></span></span>
+                                    <span>Système: <span x-text="selectedSystem === 'langchain' ? 'LangChain/Llama' : 'Gemma 2B'"></span> • Agent: <span x-text="getAgentName(selectedAgent)"></span></span>
                                 </span>
                             </div>
-                            <div class="text-dark-muted text-xs">
+                            <div class="text-gray-400 text-xs">
                                 Appuyez sur Entrée pour envoyer • <span x-text="newMessage.length"></span>/1000
                             </div>
                         </div>
@@ -724,19 +776,27 @@
 <script>
 function chatApp() {
     return {
+        selectedSystem: 'langchain', // Par défaut LangChain/Llama
         selectedAgent: '',
         messages: [],
         newMessage: '',
         isLoading: false,
         currentRespondingAgent: null,
+        currentModel: null, // Pour afficher quel modèle répond
         bookImages: [], // Nouveau: tableau pour stocker les images des livres
         
         init() {
-            // Check URL params for agent selection
+            // Check URL params for agent and system selection
             const urlParams = new URLSearchParams(window.location.search);
             const agent = urlParams.get('agent');
+            const system = urlParams.get('system');
+            
             if (agent === 'tech' || agent === 'literature' || agent === 'manga' || agent === 'coordinator') {
                 this.selectedAgent = agent;
+            }
+            
+            if (system === 'gemma' || system === 'langchain') {
+                this.selectedSystem = system;
             }
         },
 
@@ -748,6 +808,17 @@ function chatApp() {
                 case 'manga': return 'Agent BD/Manga';
                 default: return 'Unknown Agent';
             }
+        },
+        
+        selectSystem(system) {
+            this.selectedSystem = system;
+            this.messages = [];
+            this.bookImages = [];
+            this.currentRespondingAgent = null;
+            this.currentModel = null;
+            
+            // Reset agent selection when changing system
+            // this.selectedAgent = '';
         },
         
         selectAgent(agent) {
@@ -772,7 +843,7 @@ function chatApp() {
         },
         
         async sendMessage() {
-            if (!this.newMessage.trim() || !this.selectedAgent) return;
+            if (!this.newMessage.trim() || !this.selectedAgent || !this.selectedSystem) return;
             
             // L'indicateur reste visible - ne pas le masquer lors d'un nouveau message
             // this.currentRespondingAgent = null; // Commenté pour garder l'indicateur visible
@@ -784,14 +855,32 @@ function chatApp() {
             
             try {
                 let endpoint;
-                if (this.selectedAgent === 'coordinator') {
-                    endpoint = '/api/chat/coordinator-agent/';
-                } else if (this.selectedAgent === 'tech') {
-                    endpoint = '/api/chat/tech-agent/';
-                } else if (this.selectedAgent === 'manga') {
-                    endpoint = '/api/chat/manga-agent/';
+                
+                // Définir le modèle utilisé et router vers le bon système
+                if (this.selectedSystem === 'langchain') {
+                    // Système LangChain/Llama
+                    this.currentModel = 'llama';
+                    if (this.selectedAgent === 'coordinator') {
+                        endpoint = '/api/chat/langchain/router/';
+                    } else if (this.selectedAgent === 'tech') {
+                        endpoint = '/api/chat/langchain/tech/';
+                    } else if (this.selectedAgent === 'manga') {
+                        endpoint = '/api/chat/langchain/manga/';
+                    } else {
+                        endpoint = '/api/chat/langchain/literature/';
+                    }
                 } else {
-                    endpoint = '/api/chat/literature-agent/';
+                    // Système Gemma 2B
+                    this.currentModel = 'gemma';
+                    if (this.selectedAgent === 'coordinator') {
+                        endpoint = '/api/chat/llama/router/';
+                    } else if (this.selectedAgent === 'tech') {
+                        endpoint = '/api/chat/llama/tech/';
+                    } else if (this.selectedAgent === 'manga') {
+                        endpoint = '/api/chat/llama/manga/';
+                    } else {
+                        endpoint = '/api/chat/llama/literature/';
+                    }
                 }
                 
                 const response = await fetch(endpoint, {

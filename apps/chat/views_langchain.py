@@ -7,6 +7,8 @@ Ce fichier remplace progressivement les vues existantes dans apps/chat/views.py
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from .models import ConversationHistory, Message
 from .serializers import MessageSerializer
 import logging
@@ -24,6 +26,7 @@ from agents.langchain_agents.django_integration import (
 
 logger = logging.getLogger(__name__)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class LangChainTechAgentChatView(APIView):
     """Vue LangChain pour l'agent technique - Remplace TechAgentChatView"""
     
@@ -298,6 +301,7 @@ LOGGING['loggers'].update({
 })
 """
 
+@method_decorator(csrf_exempt, name='dispatch')
 class LangChainLiteratureAgentChatView(APIView):
     """Vue LangChain pour l'agent littéraire - Remplace LiteratureAgentChatView"""
     
@@ -388,6 +392,7 @@ class LangChainLiteratureAgentChatView(APIView):
                 }
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class LangChainMangaAgentChatView(APIView):
     """Vue LangChain pour l'agent manga - Remplace MangaAgentChatView"""
     
@@ -478,6 +483,7 @@ class LangChainMangaAgentChatView(APIView):
                 }
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class LangChainRouterChatView(APIView):
     """Vue LangChain pour le routage automatique - Nouvelle fonctionnalité"""
     

@@ -273,21 +273,20 @@ class CombinedSearchTool(BaseTool):
     """
     args_schema: type[BaseModel] = BookSearchInput
     
-    def __init__(self):
-        super().__init__()
-        self.tech_tool = TechBookSearchTool()
-        self.literature_tool = LiteratureBookSearchTool()
-        self.manga_tool = MangaContentSearchTool()
-    
     def _run(self, query: str, n_results: int = 3, user_id: int = 1) -> List[Dict[str, Any]]:
         """Execute une recherche combinée"""
         try:
             all_results = []
             
+            # Créer les outils dynamiquement pour éviter les problèmes Pydantic
+            tech_tool = TechBookSearchTool()
+            lit_tool = LiteratureBookSearchTool()
+            manga_tool = MangaContentSearchTool()
+            
             # Recherche dans chaque domaine
-            tech_results = self.tech_tool._run(query, max(1, n_results // 3), user_id)
-            lit_results = self.literature_tool._run(query, max(1, n_results // 3), user_id)
-            manga_results = self.manga_tool._run(query, max(1, n_results // 3), "all", user_id)
+            tech_results = tech_tool._run(query, max(1, n_results // 3), user_id)
+            lit_results = lit_tool._run(query, max(1, n_results // 3), user_id)
+            manga_results = manga_tool._run(query, max(1, n_results // 3), "all", user_id)
             
             # Combiner et trier par score de similarité
             all_results.extend(tech_results)
