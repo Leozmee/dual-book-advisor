@@ -3,17 +3,17 @@
 {% block title %}Chat - Dual Book Advisor{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-dark-bg">
+<div class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-6 py-8" x-data="chatApp()">
         <div class="flex gap-8">
             <!-- Zone de chat principale (côté gauche) -->
             <div class="flex-1 max-w-4xl">
                 <!-- Agent Selection -->
-                <div class="bg-dark-surface rounded-2xl border border-dark-border p-8 mb-8 animate-slide-up">
-                    <h2 class="text-2xl font-semibold text-dark-text mb-6">Choisissez votre agent</h2>
+                <div class="bg-white rounded-2xl border border-gray-200 p-8 mb-8 animate-slide-up shadow-lg">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-6">Choisissez votre agent</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button @click="selectAgent('coordinator')" 
-                                :class="selectedAgent === 'coordinator' ? 'bg-gradient-to-br from-accent-purple to-purple-600 text-white shadow-lg shadow-purple-500/25 border-purple-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-purple/50'"
+                                :class="selectedAgent === 'coordinator' ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25 border-purple-400' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200 hover:border-purple-300'"
                                 class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
@@ -27,7 +27,7 @@
                         </button>
                         
                         <button @click="selectAgent('tech')" 
-                                :class="selectedAgent === 'tech' ? 'bg-gradient-to-br from-accent-secondary to-blue-600 text-white shadow-lg shadow-blue-500/25 border-blue-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-secondary/50'"
+                                :class="selectedAgent === 'tech' ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 border-blue-400' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200 hover:border-blue-300'"
                                 class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
@@ -41,7 +41,7 @@
                         </button>
                         
                         <button @click="selectAgent('literature')" 
-                                :class="selectedAgent === 'literature' ? 'bg-gradient-to-br from-accent-primary to-green-600 text-white shadow-lg shadow-green-500/25 border-green-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-primary/50'"
+                                :class="selectedAgent === 'literature' ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/25 border-green-400' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200 hover:border-green-300'"
                                 class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
@@ -55,7 +55,7 @@
                         </button>
                         
                         <button @click="selectAgent('manga')" 
-                                :class="selectedAgent === 'manga' ? 'bg-gradient-to-br from-accent-orange to-red-600 text-white shadow-lg shadow-red-500/25 border-red-400' : 'bg-dark-elevated hover:bg-dark-border text-dark-text border-dark-border hover:border-accent-orange/50'"
+                                :class="selectedAgent === 'manga' ? 'bg-gradient-to-br from-orange-500 to-red-600 text-white shadow-lg shadow-red-500/25 border-red-400' : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-gray-200 hover:border-red-300'"
                                 class="group relative p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
@@ -70,7 +70,7 @@
                     </div>
                     
                     <!-- Agent Description -->
-                    <div class="mt-6 p-4 bg-dark-elevated rounded-xl border border-dark-border" x-show="selectedAgent" x-transition>
+                    <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200" x-show="selectedAgent" x-transition>
                         <div x-show="selectedAgent === 'coordinator'" class="flex items-start space-x-3">
                             <div class="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
                                 <span class="text-purple-400">💡</span>
@@ -112,17 +112,17 @@
 
 
                 <!-- Chat Messages -->
-                <div class="bg-dark-surface rounded-2xl border border-dark-border mb-8 overflow-hidden" style="height: 600px;">
+                <div class="bg-white rounded-2xl border border-gray-200 mb-8 overflow-hidden shadow-lg" style="height: 600px;">
                     <div class="h-full flex flex-col">
                         <!-- Chat Header -->
-                        <div class="p-6 border-b border-dark-border bg-dark-elevated">
+                        <div class="p-6 border-b border-gray-200 bg-gray-50">
                             <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-full flex items-center justify-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                                     <span class="text-white text-lg">🤖</span>
                                 </div>
                                 <div>
-                                    <h3 class="font-semibold text-dark-text" x-text="selectedAgent ? getAgentName(selectedAgent) : 'Sélectionnez un Agent'"></h3>
-                                    <p class="text-sm text-dark-muted" x-text="selectedAgent ? 'Prêt à vous aider' : 'Choisissez un agent pour commencer à discuter'"></p>
+                                    <h3 class="font-semibold text-gray-900" x-text="selectedAgent ? getAgentName(selectedAgent) : 'Sélectionnez un Agent'"></h3>
+                                    <p class="text-sm text-gray-600" x-text="selectedAgent ? 'Prêt à vous aider' : 'Choisissez un agent pour commencer à discuter'"></p>
                                 </div>
                             </div>
                         </div>
@@ -239,16 +239,16 @@
                 </div>
 
                 <!-- Message Input -->
-                <div class="bg-dark-surface rounded-2xl border border-dark-border p-6 animate-slide-up">
+                <div class="bg-white rounded-2xl border border-gray-200 p-6 animate-slide-up shadow-lg">
                     <form @submit.prevent="sendMessage()" class="space-y-4">
                         <div class="flex space-x-4">
                             <div class="flex-1 relative">
                                 <input type="text" 
                                        x-model="newMessage"
                                        placeholder="Demandez des recommandations de livres..."
-                                       class="w-full px-6 py-4 bg-dark-elevated border border-dark-border rounded-xl text-dark-text placeholder-dark-muted focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-accent-primary transition-all duration-200"
+                                       class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                                        :disabled="!selectedAgent || isLoading">
-                                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-dark-muted">
+                                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8m-8 0l4-4m-4 4l4 4"></path>
                                     </svg>
@@ -256,9 +256,9 @@
                             </div>
                             <button type="submit" 
                                     :disabled="!selectedAgent || !newMessage.trim() || isLoading"
-                                    class="px-8 py-4 bg-gradient-to-r from-accent-primary to-accent-secondary text-white rounded-xl font-semibold 
-                                           hover:from-accent-primary/90 hover:to-accent-secondary/90 
-                                           disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed 
+                                    class="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-semibold 
+                                           hover:from-indigo-600 hover:to-purple-700 
+                                           disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed 
                                            transition-all duration-200 transform hover:scale-105 active:scale-95
                                            shadow-lg hover:shadow-xl">
                                 <span x-show="!isLoading">Envoyer</span>
@@ -293,12 +293,12 @@
         
             <!-- Zone d'images des livres (côté droit) -->
             <div class="w-80 flex-shrink-0">
-                <div class="bg-dark-surface rounded-2xl border border-dark-border p-6 sticky top-6 animate-slide-up">
+                <div class="bg-white rounded-2xl border border-gray-200 p-6 sticky top-6 animate-slide-up shadow-lg">
                     <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-8 h-8 bg-gradient-to-br from-accent-primary to-accent-secondary rounded-lg flex items-center justify-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
                             <span class="text-white text-lg">📚</span>
                         </div>
-                        <h3 class="text-lg font-semibold text-dark-text">Recommandations de livres</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Recommandations de livres</h3>
                     </div>
                     
                     <!-- Message d'état quand pas d'images -->
