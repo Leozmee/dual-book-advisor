@@ -193,3 +193,7 @@ zipp==3.23.0
 zopfli==0.2.3.post1
 zstandard==0.23.0
 drf-yasg
+#langchain langchain-community langgraph
+langchain-openai
+langchain-anthropic 
+langchain-ollama

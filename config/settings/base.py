@@ -259,3 +259,36 @@ LANGCHAIN_MODEL = os.environ.get('LANGCHAIN_MODEL', 'gpt-3.5-turbo')
 # API Keys (à définir dans les variables d'environnement)
 # OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 # ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
+
+# Configuration LangChain
+LANGCHAIN_CONFIG = {
+    # Provider: 'openai', 'anthropic', 'ollama'
+    'provider': 'openai',  # Changez selon vos besoins
+    'model': 'gpt-3.5-turbo',
+    
+    # Clés API (utilisez les variables d'environnement)
+    'openai_api_key': os.getenv('OPENAI_API_KEY'),
+    'anthropic_api_key': os.getenv('ANTHROPIC_API_KEY'),
+    
+    # Configuration Ollama (si utilisé)
+    'ollama_base_url': 'http://localhost:11434',
+    
+    # Paramètres LLM
+    'temperature': 0.7,
+    'max_tokens': 1000,
+    'timeout': 30
+}
+
+# Logging pour LangChain
+LOGGING['loggers'].update({
+    'agents.langchain_agents': {
+        'handlers': ['console'],
+        'level': 'INFO',
+        'propagate': False,
+    },
+    'langchain': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+        'propagate': False,
+    }
+})
