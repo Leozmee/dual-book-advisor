@@ -180,31 +180,29 @@ class MangaContentSearchTool(BaseTool):
             
             manga_rag = MangaRAGManager()
             
-            # Obtenir des recommandations
-            recommendations = manga_rag.get_content_recommendations(
-                user_id=user_id,
+            # Utiliser la nouvelle méthode search_content avec détection d'auteur
+            search_results = manga_rag.search_content(
                 query=query,
-                n_recommendations=n_results,
+                n_results=n_results,
                 content_type=content_type
             )
             
             # Formater pour LangChain
             formatted_results = []
-            for rec in recommendations:
-                content = rec['content']
+            for result in search_results:
                 formatted_results.append({
-                    'id': content['id'],
-                    'title': content['title'],
-                    'description': content['description'],
-                    'rating': content['rating'],
-                    'author': content.get('author', ''),
-                    'year': content.get('year', 0),
-                    'tags': content.get('tags', ''),
-                    'cover': content.get('cover', ''),
-                    'publisher': content.get('publisher', ''),
-                    'content_type': content['type'],
-                    'similarity_score': rec['similarity_score'],
-                    'reason': rec['reason'],
+                    'id': result.get('doc_id', ''),
+                    'title': result.get('title', ''),
+                    'description': result.get('description', ''),
+                    'rating': result.get('rating', 0),
+                    'author': result.get('author', ''),
+                    'year': result.get('year', 0),
+                    'tags': result.get('tags', ''),
+                    'cover': result.get('cover', ''),
+                    'publisher': result.get('publisher', ''),
+                    'content_type': result.get('source_type', 'unknown'),
+                    'similarity_score': result.get('similarity_score', 0),
+                    'reason': f"Correspondance: {result.get('matched_text', '')[:100]}...",
                     'type': 'manga_content'
                 })
             
