@@ -290,10 +290,13 @@ class MangaRAGManager:
         if title:
             text_parts.append(f"Titre: {title}")
         
-        # Auteur
+        # Auteur (avec pondération renforcée)
         author = str(comics_row.get('author', '')).strip()
         if author:
             text_parts.append(f"Auteur: {author}")
+            # Répéter l'auteur pour renforcer la pondération
+            text_parts.append(f"Créé par {author}")
+            text_parts.append(f"Œuvre de {author}")
         
         # Description/Synopsis
         description = str(comics_row.get('description', '')).strip()
@@ -327,9 +330,106 @@ class MangaRAGManager:
         
         return ' | '.join(text_parts)
     
+    def _detect_author_search(self, query: str) -> str:
+        """Détecte si la requête concerne une recherche d'auteur"""
+        import re
+        
+        query_lower = query.lower()
+        
+        # Patterns de recherche d'auteur
+        author_patterns = [
+            r'(?:œuvres?|mangas?|comics?|livres?)\s+(?:de|d\'|par)\s+([^\s]+(?:\s+[^\s]+)*)',
+            r'recommande.*(?:de|d\'|par)\s+([^\s]+(?:\s+[^\s]+)*)',
+            r'auteur\s+([^\s]+(?:\s+[^\s]+)*)',
+            r'([a-zA-ZÀ-ÿ]+\s+[a-zA-ZÀ-ÿ]+)\s*$',  # Nom Prénom en fin de requête
+            r'toriyama',
+            r'akira',
+        ]
+        
+        for pattern in author_patterns:
+            match = re.search(pattern, query_lower)
+            if match:
+                author_name = match.group(1) if match.groups() else match.group(0)
+                return author_name.strip()
+        
+        return None
+    
+    def _search_by_author(self, author_name: str, n_results: int = 5, content_type: str = 'all') -> List[Dict[str, Any]]:
+        """Recherche par filtre exact sur l'auteur"""
+        try:
+            # Charger les données selon le type demandé
+            if content_type == 'manga':
+                data = self.load_manga_data()
+            elif content_type == 'comics':
+                data = self.load_comics_data()
+            else:
+                data = self.load_all_data()
+            
+            if data.empty:
+                return []
+            
+            # Préparer différentes variantes du nom d'auteur
+            author_variants = [
+                author_name.lower(),
+                author_name.replace(' ', ', ').lower(),  # \"Prénom Nom\" -> \"Prénom, Nom\"
+                ', '.join(reversed(author_name.split())).lower(),  # \"Prénom Nom\" -> \"Nom, Prénom\"
+            ]
+            
+            # Recherche par nom d'auteur (flexible avec toutes les variantes)
+            mask = pd.Series([False] * len(data))
+            for variant in author_variants:
+                mask = mask | data['author'].str.contains(variant, case=False, na=False, regex=False)
+            
+            # Recherche par mots individuels aussi (pour plus de flexibilité)
+            words = author_name.lower().split()
+            for word in words:
+                if len(word) > 2:  # Éviter les mots trop courts
+                    mask = mask | data['author'].str.contains(word, case=False, na=False, regex=False)
+            
+            author_matches = data[mask]
+            
+            # Convertir en format de résultat
+            results = []
+            for _, row in author_matches.head(n_results).iterrows():
+                result = {
+                    'doc_id': f"{row.get('source_type', 'unknown')}_{row.name}",
+                    'title': str(row.get('title', '')),
+                    'description': str(row.get('description', '')),
+                    'rating': float(row.get('rating', 0)) if pd.notna(row.get('rating')) else 0.0,
+                    'year': int(row.get('year', 0)) if pd.notna(row.get('year')) else 0,
+                    'tags': str(row.get('tags', '')),
+                    'cover': str(row.get('cover', '')),
+                    'author': str(row.get('author', '')),
+                    'publisher': str(row.get('publisher', '')),
+                    'nb_notes': int(row.get('nb_notes', 0)) if pd.notna(row.get('nb_notes')) else 0,
+                    'source_type': row.get('source_type', 'unknown'),
+                    'similarity_score': 1.0,  # Score parfait pour recherche exacte
+                    'matched_text': f"Auteur: {row.get('author', '')}"
+                }
+                results.append(result)
+            
+            # Trier par note décroissante
+            results.sort(key=lambda x: x['rating'], reverse=True)
+            
+            logger.info(f"Recherche auteur '{author_name}': {len(results)} résultats trouvés")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Erreur recherche auteur '{author_name}': {e}")
+            return []
+    
     def search_content(self, query: str, n_results: int = 5, content_type: str = 'all') -> List[Dict[str, Any]]:
         """Recherche dans mangas et/ou comics selon le type demandé"""
         try:
+            # Détecter si c'est une recherche d'auteur
+            author_search = self._detect_author_search(query)
+            
+            # Si c'est une recherche d'auteur, utiliser le filtre exact
+            if author_search:
+                author_results = self._search_by_author(author_search, n_results, content_type)
+                if author_results:
+                    return author_results
+            
             # Enrichir la requête selon le type de contenu
             enhanced_query = self._enhance_unified_query(query, content_type)
             

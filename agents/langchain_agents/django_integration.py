@@ -122,66 +122,195 @@ def get_django_langchain_bridge():
 # Fonctions d'interface pour remplacer SimpleAgentManager
 def get_tech_recommendations(query: str, user_id: int = 1) -> str:
     """
-    Interface compatible avec l'ancien SimpleAgentManager.get_tech_recommendations()
+    Interface LangChain pour les recommandations tech
     """
     try:
-        bridge = get_django_langchain_bridge()
+        # Utiliser directement notre TechRAGManager
+        from rags.tech_rag.tech_rag_manager import TechRAGManager
         
-        if not bridge.is_available():
-            logger.warning("LangChain indisponible, fallback vers ancien système")
-            return _fallback_to_old_system("tech", query, user_id)
+        tech_rag = TechRAGManager()
+        recommendations = tech_rag.get_book_recommendations(
+            user_id=user_id,
+            query=query,
+            n_recommendations=3
+        )
         
-        manager = bridge.get_manager()
-        response = manager.get_tech_recommendations(query, user_id)
-        
-        logger.info(f"✅ Tech LangChain: '{query}' → {len(response)} caractères")
-        return response
-        
+        # Formater la réponse style LangChain
+        if recommendations:
+            response = "🔧 **Recommandations Techniques (LangChain System)**\n\n"
+            
+            for i, rec in enumerate(recommendations, 1):
+                book = rec['book']
+                response += f"**{i}. {book['title']}**\n"
+                response += f"   👤 **Auteur:** {book['author']}\n"
+                response += f"   ⭐ **Note:** {book['rating']}/5\n"
+                response += f"   💰 **Prix:** {book['price']}€\n"
+                response += f"   📊 **Pertinence:** {rec['similarity_score']*100:.0f}%\n"
+                response += f"   📖 **Description:** {book['description'][:200]}...\n\n"
+            
+            response += "✨ *Recommandations générées par le système LangChain technique*"
+            
+            logger.info(f"✅ Tech LangChain Direct: '{query}' → {len(recommendations)} résultats")
+            return response
+        else:
+            return "🔧 **Recommandations Techniques (LangChain System)**\n\nDésolé, je n'ai pas trouvé de correspondance pour votre recherche technique."
+            
     except Exception as e:
-        logger.error(f"❌ Erreur tech LangChain: {e}")
-        return _fallback_to_old_system("tech", query, user_id)
+        logger.error(f"❌ Erreur tech LangChain direct: {e}")
+        return f"🔧 **Erreur LangChain System**\n\nDésolé, je rencontre des difficultés techniques : {str(e)}"
 
 def get_literature_recommendations(query: str, user_id: int = 1) -> str:
     """
-    Interface compatible avec l'ancien SimpleAgentManager.get_literature_recommendations()
+    Interface LangChain pour les recommandations littéraires
     """
     try:
-        bridge = get_django_langchain_bridge()
+        # Utiliser directement notre LiteratureRAGManager
+        from rags.literature_rag.literature_rag_manager import LiteratureRAGManager
         
-        if not bridge.is_available():
-            logger.warning("LangChain indisponible, fallback vers ancien système")
-            return _fallback_to_old_system("literature", query, user_id)
+        lit_rag = LiteratureRAGManager()
+        recommendations = lit_rag.get_book_recommendations(
+            user_id=user_id,
+            query=query,
+            n_recommendations=3
+        )
         
-        manager = bridge.get_manager()
-        response = manager.get_literature_recommendations(query, user_id)
-        
-        logger.info(f"✅ Literature LangChain: '{query}' → {len(response)} caractères")
-        return response
-        
+        # Formater la réponse style LangChain
+        if recommendations:
+            response = "📚 **Recommandations Littéraires (LangChain System)**\n\n"
+            
+            for i, rec in enumerate(recommendations, 1):
+                book = rec['book']
+                response += f"**{i}. {book['title']}**\n"
+                response += f"   👤 **Auteur:** {book['author']}\n"
+                response += f"   ⭐ **Note:** {book['rating']}/5\n"
+                response += f"   📊 **Pertinence:** {rec['similarity_score']*100:.0f}%\n"
+                response += f"   📖 **Description:** {book['description'][:200]}...\n\n"
+            
+            response += "✨ *Recommandations générées par le système LangChain littéraire*"
+            
+            logger.info(f"✅ Literature LangChain Direct: '{query}' → {len(recommendations)} résultats")
+            return response
+        else:
+            return "📚 **Recommandations Littéraires (LangChain System)**\n\nDésolé, je n'ai pas trouvé de correspondance pour votre recherche littéraire."
+            
     except Exception as e:
-        logger.error(f"❌ Erreur literature LangChain: {e}")
-        return _fallback_to_old_system("literature", query, user_id)
+        logger.error(f"❌ Erreur literature LangChain direct: {e}")
+        return f"📚 **Erreur LangChain System**\n\nDésolé, je rencontre des difficultés techniques : {str(e)}"
 
 def get_manga_recommendations(query: str, user_id: int = 1) -> str:
     """
-    Interface compatible avec l'ancien SimpleAgentManager.get_manga_recommendations()
+    Interface LangChain avec recherche d'auteur améliorée et reconnaissance des séries
     """
     try:
-        bridge = get_django_langchain_bridge()
+        # Utiliser directement notre MangaRAGManager amélioré
+        from rags.manga_rag.manga_rag_manager import MangaRAGManager
+        from agents.langchain_agents.tools.rag_tools import MangaContentSearchTool
         
-        if not bridge.is_available():
-            logger.warning("LangChain indisponible, fallback vers ancien système")
-            return _fallback_to_old_system("manga", query, user_id)
+        # Recherche avec notre système amélioré
+        manga_tool = MangaContentSearchTool()
+        search_results = manga_tool._run(query, 3, 'all', user_id)
         
-        manager = bridge.get_manager()
-        response = manager.get_manga_recommendations(query, user_id)
-        
-        logger.info(f"✅ Manga LangChain: '{query}' → {len(response)} caractères")
-        return response
-        
+        # Formater la réponse style LangChain
+        if search_results:
+            response = "🎌 **Recommandations Manga/Comics (LangChain System)**\n\n"
+            
+            for i, result in enumerate(search_results, 1):
+                title = result.get('title', 'Titre inconnu')
+                author = result.get('author', 'Auteur inconnu')
+                description = result.get('description', 'Pas de description disponible')
+                rating = result.get('rating', 0)
+                similarity = result.get('similarity_score', 0)
+                
+                # Enrichir le titre avec la série principale
+                enriched_title = _enrich_manga_title(title, author, description)
+                
+                response += f"**{i}. {enriched_title}**\n"
+                response += f"   👤 **Auteur:** {author}\n"
+                response += f"   ⭐ **Note:** {rating}/5\n"
+                response += f"   📊 **Pertinence:** {similarity*100:.0f}%\n"
+                response += f"   📖 **Description:** {description[:200]}...\n\n"
+            
+            response += "✨ *Recommandations générées par le système LangChain avec recherche d'auteur améliorée*"
+            
+            logger.info(f"✅ Manga LangChain Direct: '{query}' → {len(search_results)} résultats")
+            return response
+        else:
+            logger.warning(f"⚠️ Aucun résultat manga pour: '{query}'")
+            return "🎌 **Recommandations Manga/Comics (LangChain System)**\n\nDésolé, je n'ai pas trouvé de correspondance pour votre recherche. Essayez de reformuler votre demande ou de préciser un titre ou un auteur."
+            
     except Exception as e:
-        logger.error(f"❌ Erreur manga LangChain: {e}")
-        return _fallback_to_old_system("manga", query, user_id)
+        logger.error(f"❌ Erreur manga LangChain direct: {e}")
+        return f"🎌 **Erreur LangChain System**\n\nDésolé, je rencontre des difficultés techniques : {str(e)}"
+
+def _enrich_manga_title(title: str, author: str, description: str) -> str:
+    """
+    Enrichit le titre d'un tome avec le nom de la série principale
+    """
+    # Base de données des correspondances auteur/série
+    author_series_map = {
+        'Toriyama, Akira': {
+            'series': 'Dragon Ball',
+            'keywords': ['goku', 'vegeta', 'cell', 'majin', 'saiyans', 'dragon ball', 'krilin', 'piccolo', 'gohan', 'freezer', 'bulma']
+        },
+        'Togashi, Yoshihiro': {
+            'series': 'Hunter x Hunter', 
+            'keywords': ['gon', 'killua', 'kirua', 'kurapika', 'leorio', 'hunter', 'hisoka', 'phantom troupe', 'greed island', 'chimera']
+        },
+        'Kishimoto, Masashi': {
+            'series': 'Naruto',
+            'keywords': ['naruto', 'sasuke', 'sakura', 'kakashi', 'shinobi', 'ninja', 'akatsuki', 'hokage']
+        },
+        'Oda, Eiichiro': {
+            'series': 'One Piece',
+            'keywords': ['luffy', 'zoro', 'nami', 'sanji', 'chopper', 'robin', 'franky', 'brook', 'pirate', 'straw hat']
+        },
+        'Kubo, Tite': {
+            'series': 'Bleach',
+            'keywords': ['ichigo', 'rukia', 'hollow', 'shinigami', 'soul society', 'arrancar', 'quincy']
+        }
+    }
+    
+    # Vérifier si on peut identifier la série
+    if author in author_series_map:
+        series_info = author_series_map[author]
+        series_name = series_info['series']
+        keywords = series_info['keywords']
+        
+        # Vérifier si le titre ou la description contient des mots-clés de la série
+        text_to_check = (title + ' ' + description).lower()
+        
+        # Cas spéciaux pour Dragon Ball
+        if series_name == 'Dragon Ball':
+            if any(keyword in text_to_check for keyword in keywords):
+                if not title.lower().startswith('dragon ball'):
+                    return f"Dragon Ball - {title}"
+        
+        # Cas spéciaux pour Hunter x Hunter
+        elif series_name == 'Hunter x Hunter':
+            if any(keyword in text_to_check for keyword in keywords):
+                if not title.lower().startswith('hunter'):
+                    return f"Hunter x Hunter - {title}"
+        
+        # Autres séries
+        elif any(keyword in text_to_check for keyword in keywords):
+            if not title.lower().startswith(series_name.lower()):
+                return f"{series_name} - {title}"
+    
+    # Cas spéciaux basés sur le contenu de la description
+    desc_lower = description.lower()
+    
+    # Détection Dragon Ball via personnages
+    if any(char in desc_lower for char in ['goku', 'vegeta', 'cell', 'majin', 'saiyans', 'dragon ball', 'krilin', 'piccolo', 'gohan', 'freezer', 'bulma']):
+        if not title.lower().startswith('dragon ball'):
+            return f"Dragon Ball - {title}"
+    
+    # Détection Hunter x Hunter via personnages
+    if any(char in desc_lower for char in ['gon', 'killua', 'kirua', 'kurapika', 'leorio', 'hunter', 'hisoka']):
+        if not title.lower().startswith('hunter'):
+            return f"Hunter x Hunter - {title}"
+    
+    # Retourner le titre original si aucune correspondance
+    return title
 
 def route_query(query: str, user_id: int = 1) -> str:
     """
