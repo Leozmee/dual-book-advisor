@@ -23,16 +23,18 @@ urlpatterns = [
     path('manga-agent/', views.MangaAgentChatView.as_view(), name='manga_agent_chat'),
     path('coordinator-agent/', views.CoordinatorAgentChatView.as_view(), name='coordinator_agent_chat'),
     
-    # LangChain endpoints
+    # LangChain endpoints - legacy function-based views
     path('langchain/', langchain_views.langchain_chat, name='langchain_chat'),
     path('langchain/status/', langchain_views.agent_status, name='agent_status'),
-    path('langchain/tech/', langchain_views.tech_agent_direct, name='tech_agent_direct'),
-    path('langchain/literature/', langchain_views.literature_agent_direct, name='literature_agent_direct'),
+    path('langchain/tech-direct/', langchain_views.tech_agent_direct, name='tech_agent_direct'),
+    path('langchain/literature-direct/', langchain_views.literature_agent_direct, name='literature_agent_direct'),
+    
+    # LangChain endpoints - class-based views
     path('langchain/tech/', LangChainTechAgentChatView.as_view(), name='langchain_tech_agent'),
     path('langchain/literature/', LangChainLiteratureAgentChatView.as_view(), name='langchain_literature_agent'),
     path('langchain/manga/', LangChainMangaAgentChatView.as_view(), name='langchain_manga_agent'),
     path('langchain/router/', LangChainRouterChatView.as_view(), name='langchain_router'),
-    path('langchain/status/', LangChainSystemStatusView.as_view(), name='langchain_status'),
+    path('langchain/status-view/', LangChainSystemStatusView.as_view(), name='langchain_status'),
     
     # URLs hybrides pour migration progressive
     path('hybrid/tech/', HybridTechAgentChatView.as_view(), name='hybrid_tech_agent'),

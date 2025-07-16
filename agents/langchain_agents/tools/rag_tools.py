@@ -6,6 +6,7 @@ from typing import List, Dict, Any, Optional
 from langchain_core.tools import BaseTool
 from pydantic import BaseModel, Field
 import logging
+import wikipedia
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,11 @@ class ContentSearchInput(BaseModel):
     n_results: int = Field(description="Nombre de résultats souhaités", default=3)
     content_type: str = Field(description="Type de contenu: 'manga', 'comics', ou 'all'", default="all")
     user_id: int = Field(description="ID de l'utilisateur", default=1)
+
+class WikipediaSearchInput(BaseModel):
+    """Input schema pour la recherche Wikipedia"""
+    query: str = Field(description="Terme à rechercher sur Wikipedia (auteur, titre d'œuvre, etc.)")
+    language: str = Field(description="Langue de recherche: 'fr' ou 'en'", default="fr")
 
 class TechBookSearchTool(BaseTool):
     """Outil de recherche dans les livres techniques"""
@@ -95,12 +101,19 @@ class LiteratureBookSearchTool(BaseTool):
             
             lit_rag = LiteratureRAGManager()
             
-            # Obtenir des recommandations
-            recommendations = lit_rag.get_book_recommendations(
-                user_id=user_id,
-                query=query,
-                n_recommendations=n_results
-            )
+            # Détecter si c'est une recherche d'auteur spécifique
+            author_name = self._detect_author_search(query)
+            
+            if author_name:
+                # Recherche directe par auteur dans la base de données
+                recommendations = self._search_by_author(author_name, n_results, user_id)
+            else:
+                # Recherche RAG normale
+                recommendations = lit_rag.get_book_recommendations(
+                    user_id=user_id,
+                    query=query,
+                    n_recommendations=n_results
+                )
             
             # Filtrer les mangas/comics (logique de votre système)
             filtered_recommendations = self._filter_out_manga_comics(recommendations)
@@ -159,6 +172,74 @@ class LiteratureBookSearchTool(BaseTool):
         logger.info(f"Filtrage manga/comics: {len(recommendations)} → {len(filtered)} livres littéraires")
         return filtered
     
+    def _detect_author_search(self, query: str) -> str:
+        """Détecte si la requête concerne une recherche d'auteur"""
+        import re
+        
+        query_lower = query.lower().strip()
+        
+        # Patterns de recherche d'auteur avec groupes de capture
+        author_patterns = [
+            # Patterns explicites avec mots-clés
+            r'(?:œuvres?|romans?|livres?|books?)\s+(?:de|d\'|par|by)\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'recommande.*(?:de|d\'|par|by)\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'auteur\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'écrivain\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'écrit\s+par\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'written\s+by\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            
+            # Patterns pour noms complets (prénom + nom)
+            r'^([a-zA-ZÀ-ÿ]+\s+[a-zA-ZÀ-ÿ]+(?:\s+[a-zA-ZÀ-ÿ]+)*)\s*$',
+            
+            # Patterns pour noms avec particules
+            r'^([a-zA-ZÀ-ÿ]+\s+(?:de|du|van|von|da|di)\s+[a-zA-ZÀ-ÿ]+)\s*$',
+        ]
+        
+        for pattern in author_patterns:
+            match = re.search(pattern, query_lower)
+            if match:
+                author_name = match.group(1).strip()
+                # Vérifier que le nom fait au moins 3 caractères et contient des lettres
+                if len(author_name) >= 3 and re.search(r'[a-zA-ZÀ-ÿ]', author_name):
+                    return author_name
+        
+        return None
+    
+    def _search_by_author(self, author_name: str, n_results: int, user_id: int) -> List[Dict]:
+        """Recherche directe par auteur dans la base de données"""
+        try:
+            from apps.books.models import LiteratureBook
+            
+            # Recherche flexible par auteur
+            books = LiteratureBook.objects.filter(
+                authors__icontains=author_name
+            ).order_by('-average_rating', '-published_year')[:n_results]
+            
+            # Convertir en format RAG
+            recommendations = []
+            for book in books:
+                recommendations.append({
+                    'book': {
+                        'id': book.id,
+                        'title': book.title,
+                        'authors': book.authors,
+                        'description': book.description or '',
+                        'average_rating': float(book.average_rating) if book.average_rating else 0.0,
+                        'published_year': book.published_year,
+                        'categories': book.categories or '',
+                        'thumbnail': book.thumbnail or ''
+                    },
+                    'similarity_score': 0.9,  # Score élevé pour match direct d'auteur
+                    'reason': f'Livre de {author_name}'
+                })
+            
+            logger.info(f"Recherche directe auteur '{author_name}': {len(recommendations)} livres trouvés")
+            return recommendations
+            
+        except Exception as e:
+            logger.error(f"Erreur recherche auteur '{author_name}': {e}")
+            return []
+    
     def _arun(self, query: str, n_results: int = 3, user_id: int = 1):
         """Version asynchrone (non implémentée pour l'instant)"""
         raise NotImplementedError("Async version not implemented")
@@ -187,9 +268,14 @@ class MangaContentSearchTool(BaseTool):
                 content_type=content_type
             )
             
-            # Formater pour LangChain
+            # Formater et filtrer les résultats
             formatted_results = []
             for result in search_results:
+                # Filtrer les résultats avec un score de similarité très faible
+                similarity_score = result.get('similarity_score', 0)
+                if similarity_score < 0.3:  # Seuil minimum de pertinence
+                    continue
+                    
                 formatted_results.append({
                     'id': result.get('doc_id', ''),
                     'title': result.get('title', ''),
@@ -201,63 +287,204 @@ class MangaContentSearchTool(BaseTool):
                     'cover': result.get('cover', ''),
                     'publisher': result.get('publisher', ''),
                     'content_type': result.get('source_type', 'unknown'),
-                    'similarity_score': result.get('similarity_score', 0),
+                    'similarity_score': similarity_score,
                     'reason': f"Correspondance: {result.get('matched_text', '')[:100]}...",
                     'type': 'manga_content'
                 })
+            
+            # Trier par score de similarité décroissant
+            formatted_results.sort(key=lambda x: x['similarity_score'], reverse=True)
             
             logger.info(f"Manga search: '{query}' ({content_type}) → {len(formatted_results)} résultats")
             return formatted_results
             
         except Exception as e:
             logger.error(f"Erreur recherche manga: {e}")
-            # Fallback vers recherche littéraire si le RAG manga n'est pas disponible
-            return self._fallback_manga_search(query, n_results)
-    
-    def _fallback_manga_search(self, query: str, n_results: int) -> List[Dict[str, Any]]:
-        """Fallback si le RAG manga n'est pas disponible"""
-        try:
-            from apps.books.models import LiteratureBook
-            
-            # Chercher des livres qui semblent être des mangas/comics
-            keywords = ['manga', 'anime', 'shounen', 'shoujo', 'seinen', 'josei', 'comics', 'bd']
-            
-            books = LiteratureBook.objects.none()
-            for keyword in keywords:
-                books = books | LiteratureBook.objects.filter(
-                    categories__icontains=keyword
-                ) | LiteratureBook.objects.filter(
-                    description__icontains=keyword
-                ) | LiteratureBook.objects.filter(
-                    title__icontains=keyword
-                )
-            
-            # Convertir en format unifié
-            results = []
-            for book in books.distinct()[:n_results]:
-                results.append({
-                    'id': f"fallback_{book.id}",
-                    'title': book.title,
-                    'description': book.description,
-                    'rating': float(book.average_rating) if book.average_rating else 0.0,
-                    'author': book.authors,
-                    'year': book.published_year or 0,
-                    'tags': book.categories,
-                    'cover': book.thumbnail or '',
-                    'content_type': 'literature_fallback',
-                    'similarity_score': 0.5,
-                    'reason': 'Fallback depuis base littéraire',
-                    'type': 'manga_content'
-                })
-            
-            logger.info(f"Manga fallback: '{query}' → {len(results)} résultats")
-            return results
-            
-        except Exception as e:
-            logger.error(f"Erreur fallback manga: {e}")
+            # Retourner une liste vide au lieu d'un fallback vers la littérature
             return []
     
+    def _fallback_manga_search(self, query: str, n_results: int) -> List[Dict[str, Any]]:
+        """Fallback désactivé - retourne une liste vide"""
+        logger.warning("Fallback manga désactivé - utilise uniquement le RAG manga dédié")
+        return []
+    
     def _arun(self, query: str, n_results: int = 3, content_type: str = "all", user_id: int = 1):
+        """Version asynchrone (non implémentée pour l'instant)"""
+        raise NotImplementedError("Async version not implemented")
+
+class WikipediaSearchTool(BaseTool):
+    """Outil de recherche Wikipedia pour information complémentaire"""
+    
+    name: str = "wikipedia_search"
+    description: str = """
+    Recherche des informations sur Wikipedia pour des auteurs, œuvres littéraires, ou contexte culturel.
+    Utilise cet outil UNIQUEMENT quand :
+    - Le RAG littéraire ne trouve pas d'information sur un auteur ou une œuvre
+    - L'utilisateur demande des informations biographiques sur un auteur
+    - Il faut trouver la correspondance entre un titre français et anglais
+    - Il faut du contexte historique ou culturel sur une œuvre
+    """
+    args_schema: type[BaseModel] = WikipediaSearchInput
+    
+    def _run(self, query: str, language: str = "fr") -> Dict[str, Any]:
+        """Execute la recherche Wikipedia"""
+        try:
+            # Configurer la langue
+            wikipedia.set_lang(language)
+            
+            # Rechercher les pages
+            search_results = wikipedia.search(query, results=3)
+            
+            if not search_results:
+                return {
+                    'success': False,
+                    'message': f"Aucun résultat Wikipedia trouvé pour '{query}' en {language}",
+                    'suggestions': []
+                }
+            
+            # Prendre le premier résultat le plus pertinent
+            try:
+                page = wikipedia.page(search_results[0])
+                
+                # Extraire les informations principales
+                summary = wikipedia.summary(search_results[0], sentences=3)
+                
+                # Détecter si c'est un auteur ou une œuvre
+                info_type = self._detect_info_type(page.title, summary)
+                
+                result = {
+                    'success': True,
+                    'title': page.title,
+                    'summary': summary,
+                    'url': page.url,
+                    'type': info_type,
+                    'language': language,
+                    'other_languages': self._get_other_language_titles(page) if info_type == 'work' else None
+                }
+                
+                # Ajouter informations spécifiques selon le type
+                if info_type == 'author':
+                    result['author_info'] = self._extract_author_info(page.content)
+                elif info_type == 'work':
+                    result['work_info'] = self._extract_work_info(page.content)
+                
+                logger.info(f"Wikipedia search: '{query}' ({language}) → {info_type} trouvé")
+                return result
+                
+            except wikipedia.exceptions.DisambiguationError as e:
+                # Plusieurs résultats possibles
+                return {
+                    'success': True,
+                    'title': f"Plusieurs résultats pour '{query}'",
+                    'summary': f"Plusieurs pages Wikipedia trouvées. Options: {', '.join(e.options[:5])}",
+                    'type': 'disambiguation',
+                    'language': language,
+                    'options': e.options[:5]
+                }
+                
+            except wikipedia.exceptions.PageError:
+                # Page non trouvée, essayer le deuxième résultat
+                if len(search_results) > 1:
+                    try:
+                        page = wikipedia.page(search_results[1])
+                        summary = wikipedia.summary(search_results[1], sentences=3)
+                        info_type = self._detect_info_type(page.title, summary)
+                        
+                        return {
+                            'success': True,
+                            'title': page.title,
+                            'summary': summary,
+                            'url': page.url,
+                            'type': info_type,
+                            'language': language
+                        }
+                    except:
+                        pass
+                
+                return {
+                    'success': False,
+                    'message': f"Page Wikipedia non trouvée pour '{query}'",
+                    'suggestions': search_results
+                }
+                
+        except Exception as e:
+            logger.error(f"Erreur Wikipedia search: {e}")
+            return {
+                'success': False,
+                'message': f"Erreur lors de la recherche Wikipedia: {str(e)}",
+                'suggestions': []
+            }
+    
+    def _detect_info_type(self, title: str, summary: str) -> str:
+        """Détecte si c'est un auteur, une œuvre, ou autre"""
+        title_lower = title.lower()
+        summary_lower = summary.lower()
+        
+        # Indicateurs d'auteur
+        author_indicators = ['écrivain', 'auteur', 'romancier', 'poète', 'novelist', 'writer', 'author']
+        if any(indicator in summary_lower for indicator in author_indicators):
+            return 'author'
+        
+        # Indicateurs d'œuvre
+        work_indicators = ['roman', 'livre', 'novel', 'book', 'œuvre', 'work', 'récit', 'story']
+        if any(indicator in summary_lower for indicator in work_indicators):
+            return 'work'
+        
+        return 'other'
+    
+    def _extract_author_info(self, content: str) -> Dict[str, Any]:
+        """Extrait les informations d'auteur"""
+        info = {}
+        
+        # Extraire les dates de naissance/mort (basique)
+        import re
+        birth_death_pattern = r'(\d{4})\s*[-–]\s*(\d{4}|\w+)'
+        match = re.search(birth_death_pattern, content)
+        if match:
+            info['birth_year'] = match.group(1)
+            info['death_year'] = match.group(2) if match.group(2).isdigit() else None
+        
+        # Extraire les œuvres principales (premiers paragraphes)
+        works_section = content[:1000]  # Premiers 1000 caractères
+        info['biography_excerpt'] = works_section
+        
+        return info
+    
+    def _extract_work_info(self, content: str) -> Dict[str, Any]:
+        """Extrait les informations d'œuvre"""
+        info = {}
+        
+        # Extraire l'année de publication
+        import re
+        year_pattern = r'publié en (\d{4})|published in (\d{4})|(\d{4})'
+        match = re.search(year_pattern, content)
+        if match:
+            info['publication_year'] = match.group(1) or match.group(2) or match.group(3)
+        
+        # Extraire le genre
+        genre_patterns = ['roman', 'novel', 'poésie', 'poetry', 'théâtre', 'theater', 'essai', 'essay']
+        for pattern in genre_patterns:
+            if pattern in content.lower():
+                info['genre'] = pattern
+                break
+        
+        return info
+    
+    def _get_other_language_titles(self, page) -> Dict[str, str]:
+        """Obtient les titres dans d'autres langues"""
+        try:
+            # Obtenir les liens vers d'autres langues
+            other_langs = {}
+            if hasattr(page, 'links'):
+                # Basique - peut être amélioré
+                for link in page.links[:10]:  # Limite pour éviter trop de traitement
+                    if 'english' in link.lower() or 'français' in link.lower():
+                        other_langs[link] = link
+            return other_langs
+        except:
+            return {}
+    
+    def _arun(self, query: str, language: str = "fr"):
         """Version asynchrone (non implémentée pour l'instant)"""
         raise NotImplementedError("Async version not implemented")
 
@@ -332,6 +559,11 @@ class RAGToolsFactory:
         }
         
         return tool_mapping.get(agent_type, CombinedSearchTool())
+    
+    @staticmethod
+    def get_wikipedia_tool() -> BaseTool:
+        """Retourne l'outil Wikipedia"""
+        return WikipediaSearchTool()
     
     @staticmethod
     def test_all_tools(test_queries: Dict[str, str] = None):
