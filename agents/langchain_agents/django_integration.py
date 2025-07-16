@@ -181,10 +181,10 @@ def get_literature_recommendations(query: str, user_id: int = 1) -> str:
             for i, rec in enumerate(recommendations, 1):
                 book = rec['book']
                 response += f"**{i}. {book['title']}**\n"
-                response += f"   👤 **Auteur:** {book['author']}\n"
-                response += f"   ⭐ **Note:** {book['rating']}/5\n"
+                response += f"   👤 **Auteur:** {book.get('authors', 'Auteur inconnu')}\n"
+                response += f"   ⭐ **Note:** {book.get('average_rating', 0)}/5\n"
                 response += f"   📊 **Pertinence:** {rec['similarity_score']*100:.0f}%\n"
-                response += f"   📖 **Description:** {book['description'][:200]}...\n\n"
+                response += f"   📖 **Description:** {book.get('description', 'Description non disponible')[:200]}...\n\n"
             
             response += "✨ *Recommandations générées par le système LangChain littéraire*"
             

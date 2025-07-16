@@ -334,23 +334,35 @@ class MangaRAGManager:
         """Détecte si la requête concerne une recherche d'auteur"""
         import re
         
-        query_lower = query.lower()
+        query_lower = query.lower().strip()
         
-        # Patterns de recherche d'auteur
+        # Patterns de recherche d'auteur avec groupes de capture
         author_patterns = [
-            r'(?:œuvres?|mangas?|comics?|livres?)\s+(?:de|d\'|par)\s+([^\s]+(?:\s+[^\s]+)*)',
-            r'recommande.*(?:de|d\'|par)\s+([^\s]+(?:\s+[^\s]+)*)',
-            r'auteur\s+([^\s]+(?:\s+[^\s]+)*)',
-            r'([a-zA-ZÀ-ÿ]+\s+[a-zA-ZÀ-ÿ]+)\s*$',  # Nom Prénom en fin de requête
-            r'toriyama',
-            r'akira',
+            # Patterns explicites avec mots-clés
+            r'(?:œuvres?|mangas?|comics?|livres?)\s+(?:de|d\'|par)\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'recommande.*(?:de|d\'|par)\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'auteur\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'créé\s+par\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'écrit\s+par\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'dessiné\s+par\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            
+            # Patterns pour noms complets (prénom + nom)
+            r'^([a-zA-ZÀ-ÿ]+\s+[a-zA-ZÀ-ÿ]+(?:\s+[a-zA-ZÀ-ÿ]+)*)\s*$',
+            
+            # Patterns pour noms avec particules
+            r'^([a-zA-ZÀ-ÿ]+\s+(?:de|du|van|von|da|di)\s+[a-zA-ZÀ-ÿ]+)\s*$',
+            
+            # Patterns pour noms japonais (nom + prénom)
+            r'^([a-zA-ZÀ-ÿ]+\s+[a-zA-ZÀ-ÿ]+)\s*(?:mangaka|auteur)?\s*$',
         ]
         
         for pattern in author_patterns:
             match = re.search(pattern, query_lower)
             if match:
-                author_name = match.group(1) if match.groups() else match.group(0)
-                return author_name.strip()
+                author_name = match.group(1).strip()
+                # Vérifier que le nom fait au moins 3 caractères et contient des lettres
+                if len(author_name) >= 3 and re.search(r'[a-zA-ZÀ-ÿ]', author_name):
+                    return author_name
         
         return None
     
@@ -375,22 +387,56 @@ class MangaRAGManager:
                 ', '.join(reversed(author_name.split())).lower(),  # \"Prénom Nom\" -> \"Nom, Prénom\"
             ]
             
-            # Recherche par nom d'auteur (flexible avec toutes les variantes)
-            mask = pd.Series([False] * len(data))
+            # 1. Recherche exacte (priorité maximale)
+            exact_matches = pd.Series([False] * len(data))
             for variant in author_variants:
-                mask = mask | data['author'].str.contains(variant, case=False, na=False, regex=False)
+                exact_matches = exact_matches | (data['author'].str.lower() == variant)
             
-            # Recherche par mots individuels aussi (pour plus de flexibilité)
+            # 2. Recherche par contient le nom complet (priorité haute)
+            contains_matches = pd.Series([False] * len(data))
+            for variant in author_variants:
+                contains_matches = contains_matches | data['author'].str.contains(variant, case=False, na=False, regex=False)
+            
+            # 3. Recherche par mots individuels seulement si nécessaire et avec conditions strictes
+            word_matches = pd.Series([False] * len(data))
             words = author_name.lower().split()
-            for word in words:
-                if len(word) > 2:  # Éviter les mots trop courts
-                    mask = mask | data['author'].str.contains(word, case=False, na=False, regex=False)
+            if len(words) >= 2:  # Seulement si au moins 2 mots
+                for word in words:
+                    if len(word) > 3:  # Mots plus longs pour éviter les faux positifs
+                        word_mask = data['author'].str.contains(word, case=False, na=False, regex=False)
+                        # Vérifier que tous les mots sont présents dans l'auteur
+                        if word == words[0]:
+                            word_matches = word_mask
+                        else:
+                            word_matches = word_matches & word_mask
             
-            author_matches = data[mask]
+            # Combiner les résultats avec scores de priorité
+            all_results = []
+            
+            # Ajouter les matches exacts (score 1.0)
+            if exact_matches.any():
+                exact_data = data[exact_matches]
+                for _, row in exact_data.iterrows():
+                    all_results.append((row, 1.0))
+            
+            # Ajouter les matches par contient (score 0.8)
+            if contains_matches.any():
+                contains_data = data[contains_matches & ~exact_matches]
+                for _, row in contains_data.iterrows():
+                    all_results.append((row, 0.8))
+            
+            # Ajouter les matches par mots si peu de résultats (score 0.5)
+            if len(all_results) < n_results and word_matches.any():
+                word_data = data[word_matches & ~contains_matches & ~exact_matches]
+                for _, row in word_data.iterrows():
+                    all_results.append((row, 0.5))
+            
+            # Trier par score de priorité puis par rating
+            all_results.sort(key=lambda x: (x[1], x[0].get('rating', 0)), reverse=True)
             
             # Convertir en format de résultat
             results = []
-            for _, row in author_matches.head(n_results).iterrows():
+            for row, similarity_score in all_results[:n_results]:
                 result = {
                     'doc_id': f"{row.get('source_type', 'unknown')}_{row.name}",
                     'title': str(row.get('title', '')),
@@ -403,13 +449,12 @@ class MangaRAGManager:
                     'publisher': str(row.get('publisher', '')),
                     'nb_notes': int(row.get('nb_notes', 0)) if pd.notna(row.get('nb_notes')) else 0,
                     'source_type': row.get('source_type', 'unknown'),
-                    'similarity_score': 1.0,  # Score parfait pour recherche exacte
+                    'similarity_score': similarity_score,
                     'matched_text': f"Auteur: {row.get('author', '')}"
                 }
                 results.append(result)
             
-            # Trier par note décroissante
-            results.sort(key=lambda x: x['rating'], reverse=True)
+            # Déjà trié par priorité et rating
             
             logger.info(f"Recherche auteur '{author_name}': {len(results)} résultats trouvés")
             return results
