@@ -101,10 +101,15 @@ class LiteratureBookSearchTool(BaseTool):
             
             lit_rag = LiteratureRAGManager()
             
-            # Détecter si c'est une recherche d'auteur spécifique
-            author_name = self._detect_author_search(query)
+            # Détecter d'abord si c'est une recherche de titre d'œuvre (priorité)
+            title_search = self._detect_title_search(query)
+            # Puis détecter si c'est une recherche d'auteur spécifique
+            author_name = self._detect_author_search(query) if not title_search else None
             
-            if author_name:
+            if title_search:
+                # Recherche par titre avec fallback Wikipedia
+                recommendations = self._search_by_title(title_search, n_results, user_id)
+            elif author_name:
                 # Recherche directe par auteur dans la base de données
                 recommendations = self._search_by_author(author_name, n_results, user_id)
             else:
@@ -188,7 +193,7 @@ class LiteratureBookSearchTool(BaseTool):
             r'écrit\s+par\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
             r'written\s+by\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
             
-            # Patterns pour noms complets (prénom + nom)
+            # Patterns pour noms complets (prénom + nom) - mais pas les phrases avec mots-clés
             r'^([a-zA-ZÀ-ÿ]+\s+[a-zA-ZÀ-ÿ]+(?:\s+[a-zA-ZÀ-ÿ]+)*)\s*$',
             
             # Patterns pour noms avec particules
@@ -201,7 +206,47 @@ class LiteratureBookSearchTool(BaseTool):
                 author_name = match.group(1).strip()
                 # Vérifier que le nom fait au moins 3 caractères et contient des lettres
                 if len(author_name) >= 3 and re.search(r'[a-zA-ZÀ-ÿ]', author_name):
-                    return author_name
+                    # Exclure les phrases qui contiennent des mots-clés de recherche de titre
+                    excluded_words = ['qui', 'a', 'écrit', 'wrote', 'written', 'est', 'what', 'comment', 'pourquoi', 'when', 'where', 'how']
+                    if not any(word in author_name.lower() for word in excluded_words):
+                        return author_name
+        
+        return None
+    
+    def _detect_title_search(self, query: str) -> str:
+        """Détecte si la requête concerne une recherche de titre d'œuvre"""
+        import re
+        
+        query_lower = query.lower().strip()
+        
+        # Patterns de recherche de titre
+        title_patterns = [
+            # "qui a écrit X" - extraire le titre X
+            r'qui\s+a\s+écrit\s+["\']?([^"\']+)["\']?',
+            r'qui\s+a\s+écrit\s+(.+)',
+            
+            # "auteur de X" - extraire le titre X
+            r'auteur\s+de\s+["\']?([^"\']+)["\']?',
+            r'who\s+wrote\s+["\']?([^"\']+)["\']?',
+            r'author\s+of\s+["\']?([^"\']+)["\']?',
+            
+            # Patterns avec guillemets ou références explicites
+            r'livre\s+["\']([^"\']+)["\']',
+            r'roman\s+["\']([^"\']+)["\']',
+            r'œuvre\s+["\']([^"\']+)["\']',
+        ]
+        
+        for pattern in title_patterns:
+            match = re.search(pattern, query_lower)
+            if match:
+                title = match.group(1).strip()
+                # Nettoyer le titre
+                title = re.sub(r'\s+', ' ', title)  # Normaliser les espaces
+                title = title.strip('.,!?;:')  # Supprimer la ponctuation finale
+                
+                # Vérifier que le titre fait au moins 3 caractères et contient des lettres
+                if len(title) >= 3 and re.search(r'[a-zA-ZÀ-ÿ]', title):
+                    return title
         
         return None
     
@@ -239,6 +284,211 @@ class LiteratureBookSearchTool(BaseTool):
         except Exception as e:
             logger.error(f"Erreur recherche auteur '{author_name}': {e}")
             return []
+    
+    def _search_by_title(self, title: str, n_results: int, user_id: int) -> List[Dict]:
+        """Recherche par titre avec fallback Wikipedia pour trouver l'auteur"""
+        try:
+            from apps.books.models import LiteratureBook
+            from rags.literature_rag.literature_rag_manager import LiteratureRAGManager
+            
+            # Étape 1: Recherche directe par titre dans la base de données
+            books = LiteratureBook.objects.filter(
+                title__icontains=title
+            ).order_by('-average_rating', '-published_year')[:n_results]
+            
+            if books:
+                # Convertir en format RAG
+                recommendations = []
+                for book in books:
+                    recommendations.append({
+                        'book': {
+                            'id': book.id,
+                            'title': book.title,
+                            'authors': book.authors,
+                            'description': book.description or '',
+                            'average_rating': float(book.average_rating) if book.average_rating else 0.0,
+                            'published_year': book.published_year,
+                            'categories': book.categories or '',
+                            'thumbnail': book.thumbnail or ''
+                        },
+                        'similarity_score': 0.95,  # Score très élevé pour match direct de titre
+                        'reason': f'Correspondance exacte du titre "{title}"'
+                    })
+                
+                logger.info(f"Recherche directe titre '{title}': {len(recommendations)} livres trouvés")
+                
+                # Filtrer les mangas/comics AVANT de retourner
+                filtered_recommendations = self._filter_out_manga_comics(recommendations)
+                
+                # Si après filtrage il reste des livres, les retourner
+                if filtered_recommendations:
+                    logger.info(f"Après filtrage: {len(filtered_recommendations)} livres valides")
+                    return filtered_recommendations
+                else:
+                    logger.info(f"Tous les livres filtrés comme manga/comics, passage à Wikipedia")
+                    # Continuer vers l'étape Wikipedia
+            
+            # Étape 2: Utiliser Wikipedia pour trouver l'auteur
+            logger.info(f"Aucun résultat direct pour '{title}', utilisation de Wikipedia")
+            wikipedia_tool = WikipediaSearchTool()
+            
+            # Stratégie multi-recherche Wikipedia
+            search_queries = [
+                title,  # Recherche directe du titre
+                f"{title} roman",  # Titre + "roman"
+                f"{title} livre",  # Titre + "livre"
+                f"{title} auteur",  # Titre + "auteur"
+            ]
+            
+            author_from_wiki = None
+            successful_query = None
+            
+            for query in search_queries:
+                try:
+                    logger.info(f"Tentative Wikipedia avec: '{query}'")
+                    wiki_result = wikipedia_tool._run(query, language="fr")
+                    
+                    if wiki_result.get('success'):
+                        logger.info(f"Wikipedia succès pour '{query}': {wiki_result.get('title')}")
+                        
+                        # Essayer d'extraire l'auteur
+                        author_from_wiki = self._extract_author_from_wikipedia(wiki_result)
+                        
+                        if author_from_wiki:
+                            successful_query = query
+                            logger.info(f"Auteur trouvé: {author_from_wiki}")
+                            break
+                        else:
+                            logger.info(f"Aucun auteur extrait de '{query}'")
+                    else:
+                        logger.info(f"Wikipedia échec pour '{query}': {wiki_result.get('message', 'Unknown error')}")
+                        
+                except Exception as e:
+                    logger.error(f"Erreur Wikipedia pour '{query}': {e}")
+                    continue
+            
+            # Si un auteur a été trouvé, rechercher ses livres
+            if author_from_wiki:
+                logger.info(f"Auteur trouvé sur Wikipedia: {author_from_wiki}")
+                # Rechercher les livres de cet auteur
+                author_books = self._search_by_author(author_from_wiki, n_results, user_id)
+                
+                if author_books:
+                    # Modifier la raison pour indiquer l'origine Wikipedia
+                    for book in author_books:
+                        book['reason'] = f'Auteur de "{title}" trouvé sur Wikipedia via "{successful_query}": {author_from_wiki}'
+                    return author_books
+                
+                # Si pas d'auteur extrait, essayer la recherche en anglais
+                if wiki_result.get('other_languages'):
+                    english_title = self._find_english_title(wiki_result)
+                    if english_title and english_title != title:
+                        logger.info(f"Titre anglais trouvé: {english_title}")
+                        # Rechercher avec le titre anglais
+                        english_books = LiteratureBook.objects.filter(
+                            title__icontains=english_title
+                        ).order_by('-average_rating', '-published_year')[:n_results]
+                        
+                        if english_books:
+                            recommendations = []
+                            for book in english_books:
+                                recommendations.append({
+                                    'book': {
+                                        'id': book.id,
+                                        'title': book.title,
+                                        'authors': book.authors,
+                                        'description': book.description or '',
+                                        'average_rating': float(book.average_rating) if book.average_rating else 0.0,
+                                        'published_year': book.published_year,
+                                        'categories': book.categories or '',
+                                        'thumbnail': book.thumbnail or ''
+                                    },
+                                    'similarity_score': 0.9,
+                                    'reason': f'Correspondance titre anglais "{english_title}" pour "{title}"'
+                                })
+                            
+                            logger.info(f"Recherche titre anglais '{english_title}': {len(recommendations)} livres trouvés")
+                            return recommendations
+            
+            # Étape 3: Fallback vers recherche RAG normale
+            logger.info(f"Fallback vers recherche RAG pour '{title}'")
+            lit_rag = LiteratureRAGManager()
+            recommendations = lit_rag.get_book_recommendations(
+                user_id=user_id,
+                query=title,
+                n_recommendations=n_results
+            )
+            
+            # Modifier la raison pour indiquer que c'est un fallback
+            for rec in recommendations:
+                rec['reason'] = f'Recherche sémantique pour "{title}"'
+            
+            return recommendations
+            
+        except Exception as e:
+            logger.error(f"Erreur recherche titre '{title}': {e}")
+            return []
+    
+    def _extract_author_from_wikipedia(self, wiki_result: Dict) -> str:
+        """Extrait l'auteur depuis un résultat Wikipedia"""
+        try:
+            import re
+            
+            summary = wiki_result.get('summary', '')
+            # Note: variable 'title' non utilisée, supprimée pour éviter les warnings
+            
+            # Patterns pour extraire l'auteur
+            author_patterns = [
+                r'(?:roman|livre|œuvre|novel|book)\s+(?:de|d\'|par|by)\s+([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ\s\-\'\.]+)',
+                r'(?:écrit|écrite|written)\s+par\s+([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ\s\-\'\.]+)',
+                r'([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ\s\-\'\.]+)\s+(?:est|is)\s+(?:un|une|a|an)\s+(?:écrivain|auteur|novelist|writer)',
+                r'L\'auteur\s+([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ\s\-\'\.]+)',
+                r'([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ]{2,}\s+[A-ZÀ-Ÿ][a-zA-ZÀ-ÿ]{2,}(?:\s+[A-ZÀ-Ÿ][a-zA-ZÀ-ÿ]{2,})*)',  # Nom prénom
+            ]
+            
+            for pattern in author_patterns:
+                match = re.search(pattern, summary)
+                if match:
+                    author = match.group(1).strip()
+                    # Nettoyer l'auteur
+                    author = re.sub(r'\s+', ' ', author)
+                    author = author.strip('.,!?;:()[]{}')
+                    
+                    # Vérifier que c'est un nom valide
+                    if len(author) >= 3 and ' ' in author and not any(word in author.lower() for word in ['est', 'est', 'qui', 'que', 'cette', 'cette']):
+                        return author
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Erreur extraction auteur Wikipedia: {e}")
+            return None
+    
+    def _find_english_title(self, wiki_result: Dict) -> str:
+        """Trouve le titre anglais depuis un résultat Wikipedia"""
+        try:
+            # Méthode simple - peut être améliorée
+            other_languages = wiki_result.get('other_languages', {})
+            
+            # Chercher dans les langues alternatives
+            for lang, title in other_languages.items():
+                if 'english' in lang.lower() or 'en' in lang.lower():
+                    return title
+            
+            # Si pas trouvé, essayer une recherche Wikipedia en anglais
+            title = wiki_result.get('title', '')
+            if title:
+                wikipedia_tool = WikipediaSearchTool()
+                english_result = wikipedia_tool._run(title, language="en")
+                
+                if english_result.get('success'):
+                    return english_result.get('title', '')
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Erreur recherche titre anglais: {e}")
+            return None
     
     def _arun(self, query: str, n_results: int = 3, user_id: int = 1):
         """Version asynchrone (non implémentée pour l'instant)"""
@@ -323,6 +573,7 @@ class WikipediaSearchTool(BaseTool):
     - L'utilisateur demande des informations biographiques sur un auteur
     - Il faut trouver la correspondance entre un titre français et anglais
     - Il faut du contexte historique ou culturel sur une œuvre
+    - Il faut trouver l'auteur d'une oeuvre si elle n est pas dans le RAG
     """
     args_schema: type[BaseModel] = WikipediaSearchInput
     

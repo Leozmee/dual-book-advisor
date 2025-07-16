@@ -357,17 +357,17 @@ class SimpleAgentManager:
                         
                         # Construire une réponse factuelle
                         if "auteur" in query.lower() or "author" in query.lower():
-                            return f"📚 **{best_match['title']}** a été écrit par **{best_match['authors']}**.\n\n" \
+                            return f"📚 {best_match['title']} a été écrit par {best_match['authors']}.\n\n" \
                                 f"📖 Publié en {best_match.get('published_year', 'date inconnue')}\n" \
                                 f"⭐ Note moyenne: {best_match['average_rating']}/5\n" \
                                 f"📝 {best_match['description'][:200]}..."
                         
                         elif "quand" in query.lower() or "when" in query.lower():
-                            return f"📚 **{best_match['title']}** a été publié en **{best_match.get('published_year', 'date inconnue')}** par {best_match['authors']}."
+                            return f"📚 {best_match['title']} a été publié en {best_match.get('published_year', 'date inconnue')} par {best_match['authors']}."
                         
                         else:
                             # Réponse générale
-                            return f"📚 **{best_match['title']}**\n\n" \
+                            return f"📚 {best_match['title']}\n\n" \
                                 f"✍️ Auteur: {best_match['authors']}\n" \
                                 f"📅 Publié: {best_match.get('published_year', 'Date inconnue')}\n" \
                                 f"⭐ Note: {best_match['average_rating']}/5\n\n" \
@@ -375,20 +375,20 @@ class SimpleAgentManager:
             
             # Si pas trouvé dans le RAG, réponse de fallback avec info connue
             if "les enfants du capitaine grant" in query.lower():
-                return """📚 **Les Enfants du capitaine Grant**
+                return """📚 Les Enfants du capitaine Grant
 
-    ✍️ **Auteur: Jules Verne** (1828-1905)
-    📅 **Publié:** 1867-1868
-    📖 **Genre:** Roman d'aventures, littérature jeunesse
+    ✍️ Auteur: Jules Verne (1828-1905)
+    📅 Publié: 1867-1868
+    📖 Genre: Roman d'aventures, littérature jeunesse
 
-    🌍 **Résumé:** Roman d'aventures où les enfants du capitaine Grant partent à la recherche de leur père disparu. L'expédition les mène autour du monde, de l'Amérique du Sud à l'Australie en passant par l'océan Pacifique.
+    🌍 Résumé: Roman d'aventures où les enfants du capitaine Grant partent à la recherche de leur père disparu. L'expédition les mène autour du monde, de l'Amérique du Sud à l'Australie en passant par l'océan Pacifique.
 
-    📚 **Autres œuvres de Jules Verne:**
+    📚 Autres œuvres de Jules Verne:
     - Vingt mille lieues sous les mers
     - Le Tour du monde en 80 jours  
     - Voyage au centre de la Terre
 
-    💡 **Pour des recommandations similaires, demandez:** "livres comme Jules Verne" ou "romans d'aventure classiques"."""
+    💡 Pour des recommandations similaires, demandez: "livres comme Jules Verne" ou "romans d'aventure classiques"."""
             
             return self._get_factual_fallback_response(query)
             
@@ -456,13 +456,13 @@ class SimpleAgentManager:
         
         # Autres questions
         else:
-            return """❓ **Question factuelle détectée**
+            return """❓ Question factuelle détectée
 
     Je suis spécialisé dans les recommandations de livres. Pour des questions factuelles:
 
-    📚 **Littérature:** "Qui est l'auteur de [titre]"
-    🔧 **Technique:** "Livres pour apprendre [technologie]"
-    🎌 **Manga/Comics:** "Recommandations manga action"
+    📚 Littérature: "Qui est l'auteur de [titre]"
+    🔧 Technique: "Livres pour apprendre [technologie]"
+    🎌 Manga/Comics: "Recommandations manga action"
 
     💡 Reformulez votre question en demande de recommandation pour une meilleure réponse !"""
 
@@ -768,7 +768,7 @@ Je n'ai pas trouvé de correspondance exacte pour "{query}", mais voici des sugg
                 # Enrichir avec des images de couverture
                 filtered_recommendations = self._enrich_recommendations_with_images(filtered_recommendations, 'literature')
                 
-                response = "📚 **Recommandations Littéraires**\n\n"
+                response = "📚 Recommandations Littéraires\n\n"
                 
                 for i, rec in enumerate(filtered_recommendations, 1):
                     book = rec['book']
@@ -777,7 +777,7 @@ Je n'ai pas trouvé de correspondance exacte pour "{query}", mais voici des sugg
                     if rec.get('cover_image_url'):
                         response += f"📸 ![{book['title']}]({rec['cover_image_url']})\n\n"
                     
-                    response += f"{i}. **{book['title']}** de {book['authors']}\n"
+                    response += f"{i}. {book['title']} de {book['authors']}\n"
                     response += f"   ⭐ Note: {book['average_rating']}/5"
                     if book['published_year']:
                         response += f" | 📅 {book['published_year']}"

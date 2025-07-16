@@ -225,6 +225,15 @@ Analyse la requête et fournis une classification précise avec justification.
                 "keywords": [kw for kw in self.tech_keywords if kw in query_lower]
             }
         
+        # Détection spéciale pour questions d'auteur classique
+        if self._is_author_question(query_lower):
+            return {
+                "agent_type": "literature",
+                "confidence": 0.95,  # Confiance très élevée pour éviter le LLM
+                "reasoning": "Question d'auteur détectée - littérature classique",
+                "keywords": ["qui a écrit", "auteur", "author"]
+            }
+        
         # Par défaut : littérature (mais avec confiance modérée pour LLM)
         return {
             "agent_type": "literature",
@@ -254,6 +263,25 @@ Analyse la requête et fournis une classification précise avec justification.
             expanded_parts.append('recommendation suggest similar')
         
         return ' '.join(expanded_parts)
+    
+    def _is_author_question(self, query_lower: str) -> bool:
+        """
+        Détecte si la requête est une question d'auteur classique
+        """
+        author_patterns = [
+            r'qui\s+a\s+écrit',
+            r'qui\s+a\s+écrit',
+            r'auteur\s+de',
+            r'who\s+wrote',
+            r'author\s+of',
+            r'écrit\s+par',
+            r'written\s+by'
+        ]
+        
+        for pattern in author_patterns:
+            if re.search(pattern, query_lower):
+                return True
+        return False
     
     def _extract_requested_count(self, query: str) -> int:
         """
