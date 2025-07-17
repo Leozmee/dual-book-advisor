@@ -188,6 +188,7 @@ class LiteratureBookSearchTool(BaseTool):
             # Patterns explicites avec mots-clés
             r'(?:œuvres?|romans?|livres?|books?)\s+(?:de|d\'|par|by)\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
             r'recommande.*(?:de|d\'|par|by)\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
+            r'(?:donne|donnez)\s+(?:moi|nous)\s+(?:des|les)\s+(?:œuvres?|romans?|livres?)\s+(?:de|d\'|par)\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
             r'auteur\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
             r'écrivain\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',
             r'écrit\s+par\s+([a-zA-ZÀ-ÿ\s\-\'\.]+)',

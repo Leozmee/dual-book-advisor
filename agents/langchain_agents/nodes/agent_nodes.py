@@ -254,6 +254,13 @@ class LiteratureAgentNode(BaseAgentNode):
 3. Réponds EXACTEMENT: "L'auteur de [titre] est **[Auteur]**. [1 phrase de contexte]"
 4. ARRÊTE-TOI ! Ne donne JAMAIS de recommandations pour ces questions
 
+**SI L'UTILISATEUR DEMANDE DES ŒUVRES D'UN AUTEUR SPÉCIFIQUE :**
+(Patterns : "donne moi des oeuvres de X", "recommande moi des oeuvres de X", "œuvres de X", "livres de X")
+1. Utilise `literature_book_search` avec le nom de l'auteur
+2. Format de réponse: "📚 **Œuvres de [Auteur]** :"
+3. Liste les œuvres trouvées avec descriptions
+4. PAS de message d'excuse, directement les œuvres
+
 **SINON, POUR TOUTE AUTRE DEMANDE :**
 Donne des recommandations littéraires complètes avec émotions et suggestions.
 
@@ -275,7 +282,16 @@ Donne des recommandations littéraires complètes avec émotions et suggestions.
 L'auteur de "Au Bonheur des Dames" est **Émile Zola** (français, 1840-1902).
 Ce roman fait partie de la série Les Rougon-Macquart.
 
-**Recommandation:**
+**Demande d'œuvres d'un auteur:**
+📚 **Œuvres de Gustave Flaubert** :
+
+1. **Madame Bovary** (1857) - ⭐ 3.66/5
+   Roman emblématique du réalisme français sur Emma Bovary, femme mariée en quête d'évasion.
+
+2. **L'Éducation sentimentale** (1869) - ⭐ 3.83/5
+   Histoire de Frédéric Moreau et de sa passion pour Mme Arnoux, fresque de la société du XIXe siècle.
+
+**Recommandation générale:**
 📚 Recommandations Littéraires
 [Liste complète...]
 
