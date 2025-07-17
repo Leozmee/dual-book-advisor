@@ -58,33 +58,17 @@ class ClassifierNode:
         
         self.tech_keywords = [
             'python', 'javascript', 'java', 'c#', 'csharp', 'php', 'ruby', 'go',
-            'cobol', 'fortran', 'pascal', 'ada', 'perl', 'scala', 'kotlin',
-            'swift', 'rust', 'c++', 'cpp', 'c', 'assembly', 'assembler',
-            'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'sqlite',
             'programming', 'programmation', 'développement', 'development',
             'web', 'mobile', 'app', 'application', 'software', 'logiciel',
             'machine learning', 'data science', 'ai', 'intelligence artificielle',
             'algorithm', 'algorithme', 'code', 'coding', 'framework',
-            'database', 'base de données', 'api', 'backend', 'frontend',
-            'react', 'angular', 'vue', 'node', 'express', 'django', 'flask',
-            'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'cloud',
-            'git', 'github', 'gitlab', 'devops', 'ci/cd', 'agile', 'scrum'
+            'database', 'base de données', 'api', 'backend', 'frontend'
         ]
         
         self.literature_keywords = [
             'roman', 'romans', 'novel', 'literature', 'littérature',
             'auteur', 'author', 'écrivain', 'writer', 'fiction',
             'classique', 'classic', 'poetry', 'poésie', 'théâtre', 'theater'
-        ]
-        
-        # Auteurs littéraires classiques connus
-        self.known_authors = [
-            'victor hugo', 'gustave flaubert', 'stendhal', 'émile zola', 'marcel proust',
-            'albert camus', 'jean-paul sartre', 'simone de beauvoir', 'andré gide',
-            'françois mauriac', 'andré malraux', 'charles baudelaire', 'paul verlaine',
-            'arthur rimbaud', 'voltaire', 'molière', 'racine', 'corneille',
-            'shakespeare', 'dickens', 'tolstoy', 'dostoevsky', 'kafka',
-            'hemingway', 'steinbeck', 'orwell', 'joyce', 'wilde'
         ]
         
         # Dictionnaire d'expansion sémantique (adapté de votre logique)
@@ -109,14 +93,6 @@ class ClassifierNode:
             'javascript': 'JavaScript web development frontend backend Node.js',
             'c#': 'C# CSharp .NET Microsoft programming Windows development',
             'java': 'Java programming language enterprise development Android',
-            'cobol': 'COBOL programming language legacy business mainframe',
-            'fortran': 'Fortran programming language scientific computing numerical',
-            'pascal': 'Pascal programming language structured programming education',
-            'c++': 'C++ programming language object-oriented system programming',
-            'rust': 'Rust programming language systems programming memory safety',
-            'swift': 'Swift programming language iOS macOS Apple development',
-            'kotlin': 'Kotlin programming language Android JVM development',
-            'scala': 'Scala programming language functional programming JVM',
             'machine learning': 'machine learning AI artificial intelligence data science',
             'data science': 'data science analysis statistics Python R visualization',
             
@@ -132,113 +108,31 @@ class ClassifierNode:
         """Construit la chaîne de classification LangChain"""
         
         classification_prompt = ChatPromptTemplate.from_template("""
-# Prompt de Routage Intelligent pour Agents Littéraires
+Tu es un expert en classification de requêtes pour un système de recommandation de livres.
 
-## MISSION PRINCIPALE
-Tu es un coordinateur intelligent qui route les demandes vers le bon agent spécialisé. Tu dois ANALYSER le contenu de la requête pour identifier précisément le domaine concerné AVANT de router.
+Analyse cette requête utilisateur et détermine quel agent spécialisé devrait la traiter :
 
-## RÈGLES DE ROUTAGE CRITIQUES
+**AGENTS DISPONIBLES:**
+- **TECH** : Livres techniques, programmation, informatique, data science
+- **LITERATURE** : Littérature générale, romans, classiques, fiction (SANS manga/anime)
+- **MANGA** : Manga japonais, anime, comics, bandes dessinées
 
-### 1. IDENTIFICATION DES DOMAINES
-
-#### 📚 AGENT LITTÉRAIRE (literature)
-**Déclenche quand la requête contient :**
-- Noms d'auteurs classiques/littéraires : Hugo, Flaubert, Zola, Proust, Camus, etc.
-- Titres de romans/nouvelles classiques : Les Misérables, Madame Bovary, etc.
-- Mots-clés : "roman", "livre", "littérature", "auteur", "écrivain", "poète"
-- Demandes d'œuvres d'un auteur littéraire
-- Questions sur la littérature française/mondiale
-
-**Exemples à router vers LITTÉRAIRE :**
-- "qui est l'auteur de Les Misérables"
-- "recommande moi des oeuvres de Victor Hugo"
-- "donne moi des oeuvres de Stendhal"
-- "j'ai aimé L'Étranger de Camus"
-
-#### 🎌 AGENT MANGA/COMICS (manga)
-**Déclenche quand la requête contient :**
-- Noms de manga/anime : One Piece, Naruto, Slime datta ken, Sword Art Online, etc.
-- Termes manga : "manga", "anime", "light novel", "shounen", "seinen", etc.
-- Noms d'auteurs manga : Oda, Kishimoto, etc.
-- Références à la culture japonaise/comics
-- Titres avec des caractéristiques manga (noms japonais, fantasy moderne, etc.)
-
-**RÈGLE CRUCIALE POUR LES MANGAS :**
-Si la requête mentionne un titre qui ressemble à un manga/anime/light novel (ex: "slime datta ken", "sword art online", etc.), TOUJOURS router vers manga, même si le titre n'est pas explicitement dans la liste.
-
-**Exemples à router vers MANGA :**
-- "qui est l'auteur de Sword Art Online"
-- "j'ai aimé slime datta ken, recommande moi deux oeuvres"
-- "j'ai aimé one piece recommande moi deux oeuvres"
-- "j'ai aimé [tout titre qui semble être un manga/anime]"
-
-#### 🔧 AGENT TECHNIQUE (tech)
-**Déclenche quand la requête contient :**
-- Langages de programmation : Python, Java, JavaScript, C++, etc.
-- Technologies : React, Docker, AWS, etc.
-- Mots-clés : "apprendre", "programmation", "développement", "code", "technique"
-- Demandes d'apprentissage technologique
-
-**Exemples à router vers TECHNIQUE :**
-- "j'aimerais apprendre le python"
-- "recommande moi des livres sur React"
-
-### 2. ANALYSE PRÉALABLE OBLIGATOIRE
-
-Avant de router, tu DOIS :
-1. **Identifier les entités** : Extraire noms d'auteurs, titres, technologies
-2. **Classifier le domaine** : Littérature classique vs Manga vs Technique
-3. **Vérifier la cohérence** : S'assurer que le routage correspond au contenu
-
-### 3. GESTION DES CAS AMBIGUS
-
-#### Si AUTEUR INCONNU ou AMBIGU :
-Analyser le contexte pour déterminer s'il s'agit de :
-- 📚 Littérature classique/contemporaine
-- 🎌 Manga/anime/light novel  
-- 🔧 Documentation technique
-
-### 4. RÈGLES STRICTES DE COHÉRENCE
-
-#### ❌ ERREURS À ÉVITER ABSOLUMENT :
-1. **Router "Slime datta ken" vers l'agent technique** 
-2. **Router "Victor Hugo" vers l'agent technique**
-3. **Donner des recommandations techniques quand on demande des œuvres littéraires**
-4. **Mélanger les formats de réponse entre agents**
-
-#### ✅ VALIDATION AVANT ROUTAGE :
-- "Sword Art Online" = MANGA (pas technique)
-- "Victor Hugo" = LITERATURE (pas technique)  
-- "Python programming" = TECH
-- "Stendhal" = LITERATURE
-- "One Piece" = MANGA
-
-## EXEMPLES DE ROUTAGE CORRECT
-
-**USER:** "j'ai aimé slime datta ken, recommande moi deux oeuvres"
-**ANALYSE:** "Slime datta ken" = manga/light novel japonais
-**ROUTE:** manga ✅
-
-**USER:** "qui est l'auteur de Les Misérables"  
-**ANALYSE:** "Les Misérables" = roman classique français
-**ROUTE:** literature ✅
-
-**USER:** "j'aimerais apprendre le python"
-**ANALYSE:** "python" = langage de programmation
-**ROUTE:** tech ✅
-
-**USER:** "donne moi des oeuvres de Stendhal"
-**ANALYSE:** "Stendhal" = auteur littéraire français classique
-**ROUTE:** literature ✅
-
-## CONTRÔLE QUALITÉ FINAL
-
-Avant chaque réponse, vérifie :
-- ✅ Le routage correspond-il au domaine de la requête ?
-- ✅ L'agent utilisé peut-il réellement répondre à cette demande ?
-- ✅ La réponse est-elle cohérente avec la question posée ?
+**RÈGLES DE PRIORITÉ:**
+1. Si la requête mentionne des mangas, anime, comics ou BD → MANGA (priorité absolue)
+2. Si la requête mentionne de la programmation, tech, langages → TECH
+3. Sinon → LITERATURE (littérature classique uniquement)
 
 **REQUÊTE UTILISATEUR:** {query}
+
+**MOTS-CLÉS MANGA:** manga, anime, naruto, one piece, dragon ball, attack on titan, death note, shounen, seinen, comics, bd, superman, batman, marvel, dc, tintin, astérix
+
+**MOTS-CLÉS TECH:** python, javascript, java, programming, development, web, mobile, data science, machine learning, ai, code, algorithm
+
+**EXEMPLES:**
+- "j'ai aimé naruto" → MANGA (mot-clé manga détecté)
+- "livres pour apprendre Python" → TECH (programmation)
+- "romans de Tolstoï" → LITERATURE (littérature classique)
+- "comics superman" → MANGA (comics détecté)
 
 Analyse la requête et fournis une classification précise avec justification.
 
@@ -309,17 +203,7 @@ Analyse la requête et fournis une classification précise avec justification.
         """
         query_lower = query.lower()
         
-        # Détection des auteurs littéraires classiques (priorité haute)
-        for author in self.known_authors:
-            if author in query_lower:
-                return {
-                    "agent_type": "literature",
-                    "confidence": 0.95,
-                    "reasoning": f"Auteur littéraire classique détecté: {author}",
-                    "keywords": [author]
-                }
-        
-        # Détection manga/comics (priorité absolue pour les mots-clés explicites)
+        # Détection manga/comics (priorité absolue)
         manga_score = sum(1 for keyword in self.manga_keywords if keyword in query_lower)
         if manga_score > 0:
             return {
@@ -333,8 +217,7 @@ Analyse la requête et fournis une classification précise avec justification.
         tech_score = sum(1 for keyword in self.tech_keywords if keyword in query_lower)
         lit_score = sum(1 for keyword in self.literature_keywords if keyword in query_lower)
         
-        # Vérification spéciale pour éviter les faux positifs techniques
-        if tech_score > 0 and not self._is_likely_literature_query(query_lower):
+        if tech_score > lit_score and tech_score > 0:
             return {
                 "agent_type": "tech",
                 "confidence": min(0.8 + tech_score * 0.1, 1.0),
@@ -346,35 +229,17 @@ Analyse la requête et fournis une classification précise avec justification.
         if self._is_author_question(query_lower):
             return {
                 "agent_type": "literature",
-                "confidence": 0.95,
+                "confidence": 0.95,  # Confiance très élevée pour éviter le LLM
                 "reasoning": "Question d'auteur détectée - littérature classique",
                 "keywords": ["qui a écrit", "auteur", "author"]
             }
         
-        # Détection des œuvres littéraires par pattern
-        if self._is_works_request(query_lower):
-            return {
-                "agent_type": "literature",
-                "confidence": 0.85,
-                "reasoning": "Demande d'œuvres détectée - probablement littérature",
-                "keywords": ["œuvres", "works", "donne moi"]
-            }
-        
-        # Si aucun mot-clé technique mais des indices littéraires, privilégier la littérature
-        if lit_score > 0 or self._has_literary_context(query_lower):
-            return {
-                "agent_type": "literature",
-                "confidence": 0.7,
-                "reasoning": f"Contexte littéraire détecté (lit_score: {lit_score})",
-                "keywords": [kw for kw in self.literature_keywords if kw in query_lower]
-            }
-        
-        # Par défaut : utiliser le LLM pour analyse plus fine
+        # Par défaut : littérature (mais avec confiance modérée pour LLM)
         return {
             "agent_type": "literature",
-            "confidence": 0.2,  # Confiance très faible pour forcer l'utilisation du LLM
-            "reasoning": "Classification incertaine - analyse LLM nécessaire",
-            "keywords": []
+            "confidence": 0.6 if lit_score > 0 else 0.3,
+            "reasoning": f"Classification littérature par défaut (lit_score: {lit_score})",
+            "keywords": [kw for kw in self.literature_keywords if kw in query_lower]
         }
     
     def _expand_query(self, query: str) -> str:
@@ -417,65 +282,6 @@ Analyse la requête et fournis une classification précise avec justification.
             if re.search(pattern, query_lower):
                 return True
         return False
-    
-    def _is_works_request(self, query_lower: str) -> bool:
-        """
-        Détecte si la requête demande des œuvres d'un auteur
-        """
-        works_patterns = [
-            r'(?:donne|donnez).{0,20}(?:moi|nous).{0,20}(?:des|les).{0,20}(?:œuvres|oeuvres|works|livres)',
-            r'(?:œuvres|oeuvres|works|livres).{0,20}(?:de|par|by)',
-            r'(?:recommande|suggest).{0,20}(?:des|les).{0,20}(?:œuvres|oeuvres|works)',
-            r'(?:liste|list).{0,20}(?:des|les).{0,20}(?:œuvres|oeuvres|works)'
-        ]
-        
-        for pattern in works_patterns:
-            if re.search(pattern, query_lower):
-                return True
-        return False
-    
-    def _is_likely_literature_query(self, query_lower: str) -> bool:
-        """
-        Vérifie si la requête a des indices littéraires forts
-        MAIS exclut les cas où c'est clairement technique
-        """
-        # D'abord, vérifier si c'est une demande technique explicite
-        tech_learning_patterns = [
-            r'apprendre\s+(?:le\s+)?(?:python|javascript|java|c#|php|ruby|go|cobol|fortran|pascal|c\+\+|rust|swift|kotlin|scala)',
-            r'(?:python|javascript|java|c#|php|ruby|go|cobol|fortran|pascal|c\+\+|rust|swift|kotlin|scala)\s+(?:livres?|books?)',
-            r'programmation\s+(?:livres?|books?)',
-            r'développement\s+(?:livres?|books?)',
-            r'coding\s+(?:livres?|books?)',
-            r'(?:machine\s+learning|data\s+science|ai)\s+(?:livres?|books?)',
-            r'(?:react|angular|vue|node|express|django|flask)\s+(?:livres?|books?)',
-            r'(?:docker|kubernetes|aws|azure|gcp|cloud)\s+(?:livres?|books?)'
-        ]
-        
-        # Si c'est une demande technique avec "livres", ce n'est pas littéraire
-        for pattern in tech_learning_patterns:
-            if re.search(pattern, query_lower):
-                return False
-        
-        literary_indicators = [
-            'madame bovary', 'les misérables', 'l\'étranger', 'la peste',
-            'guerre et paix', 'anna karénine', 'crime et châtiment',
-            'roman', 'romans', 'œuvre', 'œuvres',
-            'auteur', 'écrivain', 'poète', 'littérature', 'classique'
-        ]
-        
-        return any(indicator in query_lower for indicator in literary_indicators)
-    
-    def _has_literary_context(self, query_lower: str) -> bool:
-        """
-        Détecte un contexte littéraire général dans la requête
-        """
-        literary_context = [
-            'j\'ai aimé', 'j\'ai lu', 'j\'ai adoré', 'similaire à',
-            'comme', 'dans le style de', 'recommande', 'suggestion',
-            'conseil de lecture', 'que lire', 'quoi lire'
-        ]
-        
-        return any(context in query_lower for context in literary_context)
     
     def _extract_requested_count(self, query: str) -> int:
         """
@@ -533,7 +339,7 @@ Analyse la requête et fournis une classification précise avec justification.
         
         # Mettre à jour l'état
         state.update({
-            "classification": classification.model_dump(),
+            "classification": classification.dict(),
             "agent_type": classification.agent_type,
             "expanded_query": classification.expanded_query,
             "requested_count": classification.requested_count,
