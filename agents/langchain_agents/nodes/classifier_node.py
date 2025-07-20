@@ -50,10 +50,14 @@ class ClassifierNode:
         # Dictionnaires de mots-clés (adaptés de votre logique existante)
         self.manga_keywords = [
             'manga', 'anime', 'naruto', 'one piece', 'dragon ball', 'attack on titan',
+            'attaque des titans', "l'attaque des titans", 'shingeki no kyojin',
             'death note', 'fullmetal', 'bleach', 'demon slayer', 'tokyo ghoul',
+            'sword art online', 'sao', 'light novel', 'ln', 'slime datta ken',
+            'tensei shitara slime', 'akira toriyama', 'oda', 'kishimoto',
+            'reki kawahara', 'hajime isayama', 'tite kubo', 'masashi kishimoto',
             'shounen', 'shoujo', 'seinen', 'josei', 'manhua', 'manhwa', 'otaku',
             'comics', 'bd', 'bande dessinée', 'superman', 'batman', 'marvel', 'dc',
-            'tintin', 'astérix', 'superhéros'
+            'tintin', 'astérix', 'superhéros', 'mangaka', 'webtoon'
         ]
         
         self.tech_keywords = [
@@ -97,6 +101,9 @@ class ClassifierNode:
             'victor hugo': 'Victor Hugo Les Misérables Hunchback Notre Dame French classic',
             'shakespeare': 'William Shakespeare Hamlet Romeo Juliet Macbeth English',
             'camus': 'Albert Camus Stranger Plague Myth Sisyphus existentialism',
+            'stendhal': 'Stendhal Le Rouge et le Noir La Chartreuse de Parme French literature classic',
+            'zola': 'Émile Zola Germinal L\'Assommoir naturalisme French literature',
+            'flaubert': 'Gustave Flaubert Madame Bovary Salammbô French literature realism',
             
             # Genres littéraires
             'fantasy': 'fantasy magic adventure fiction magical worlds',
@@ -120,10 +127,15 @@ class ClassifierNode:
             'machine learning': 'machine learning AI artificial intelligence data science',
             'data science': 'data science analysis statistics Python R visualization',
             
-            # Manga/Comics
+            # Manga/Comics/Light Novels
             'manga': 'manga anime Japanese comic otaku shounen seinen',
             'naruto': 'Naruto ninja village hidden leaf Uzumaki Sasuke Sakura action',
             'one piece': 'One Piece pirate treasure Luffy Straw Hat Grand Line adventure',
+            'sword art online': 'Sword Art Online SAO virtual reality MMORPG Kirito Asuna light novel',
+            'sao': 'Sword Art Online SAO virtual reality MMORPG Kirito Asuna light novel',
+            'slime datta ken': 'Tensei Shitara Slime Datta Ken That Time I Got Reincarnated as a Slime Rimuru isekai',
+            'akira toriyama': 'Akira Toriyama Dragon Ball Dr Slump manga creator',
+            'reki kawahara': 'Reki Kawahara Sword Art Online Accel World light novel author',
             'comics': 'comics superhero graphic novel DC Marvel',
             'bd': 'bande dessinée comics album français',
         }
@@ -319,14 +331,23 @@ Analyse la requête et fournis une classification précise avec justification.
                     "keywords": [author]
                 }
         
-        # Détection manga/comics (priorité absolue pour les mots-clés explicites)
+        # Détection manga/comics/light novels (priorité absolue pour les mots-clés explicites)
         manga_score = sum(1 for keyword in self.manga_keywords if keyword in query_lower)
         if manga_score > 0:
             return {
                 "agent_type": "manga",
                 "confidence": min(0.9 + manga_score * 0.1, 1.0),
-                "reasoning": f"Mots-clés manga/comics détectés: {manga_score}",
+                "reasoning": f"Mots-clés manga/comics/light novel détectés: {manga_score}",
                 "keywords": [kw for kw in self.manga_keywords if kw in query_lower]
+            }
+        
+        # Détection spéciale pour les questions d'auteur de manga/anime
+        if self._is_manga_author_question(query_lower):
+            return {
+                "agent_type": "manga",
+                "confidence": 0.95,
+                "reasoning": "Question d'auteur de manga/anime détectée",
+                "keywords": ["qui a écrit", "auteur", "manga", "anime"]
             }
         
         # Détection technique
@@ -417,6 +438,38 @@ Analyse la requête et fournis une classification précise avec justification.
             if re.search(pattern, query_lower):
                 return True
         return False
+    
+    def _is_manga_author_question(self, query_lower: str) -> bool:
+        """
+        Détecte si la requête est une question d'auteur de manga/anime
+        """
+        # Liste de titres de manga/anime populaires
+        popular_manga_titles = [
+            'naruto', 'one piece', 'dragon ball', 'attack on titan', 'death note',
+            'fullmetal alchemist', 'bleach', 'demon slayer', 'tokyo ghoul',
+            'hunter x hunter', 'my hero academia', 'jujutsu kaisen', 'chainsaw man',
+            'black clover', 'fairy tail', 'seven deadly sins', 'mob psycho',
+            'one punch man', 'overlord', 'konosuba', 'rezero', 'shield hero',
+            'that time i got reincarnated as a slime', 'slime datta ken',
+            'tensei shitara slime datta ken', 'sword art online', 'sao',
+            'log horizon', 'danmachi', 'goblin slayer', 'akame ga kill'
+        ]
+        
+        author_patterns = [
+            r'qui\s+(?:a\s+)?(?:écrit|créé)',
+            r'auteur\s+de',
+            r'créateur\s+de',
+            r'mangaka\s+de',
+            r'who\s+(?:wrote|created)',
+            r'author\s+of',
+            r'creator\s+of'
+        ]
+        
+        # Vérifier si c'est une question d'auteur ET qu'un titre de manga est mentionné
+        has_author_pattern = any(re.search(pattern, query_lower) for pattern in author_patterns)
+        has_manga_title = any(title in query_lower for title in popular_manga_titles)
+        
+        return has_author_pattern and has_manga_title
     
     def _is_works_request(self, query_lower: str) -> bool:
         """
