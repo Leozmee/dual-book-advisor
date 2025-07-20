@@ -39,8 +39,8 @@ class BaseAgentNode:
         return AgentExecutor(
             agent=agent,
             tools=[self.tool],
-            verbose=True,
-            return_intermediate_steps=True,
+            verbose=False,
+            return_intermediate_steps=False,
             max_iterations=3
         )
     
@@ -77,7 +77,6 @@ class BaseAgentNode:
                 "agent_response": result["output"],
                 "agent_type_used": self.agent_type,
                 "processing_time": processing_time,
-                "intermediate_steps": result.get("intermediate_steps", []),
                 "success": True
             })
             
@@ -238,48 +237,67 @@ class LiteratureAgentNode(BaseAgentNode):
         return AgentExecutor(
             agent=agent,
             tools=self.tools,
-            verbose=True,
-            return_intermediate_steps=True,
-            max_iterations=5  # Plus d'itérations pour utiliser Wikipedia si nécessaire
+            verbose=False,
+            return_intermediate_steps=False,
+            max_iterations=3  # Optimisé pour les performances
         )
     
     def _create_prompt(self) -> ChatPromptTemplate:
         """Prompt spécialisé pour les recommandations littéraires"""
         return ChatPromptTemplate.from_messages([
-            ("system", """Tu es un expert littéraire français. Analyse la demande de l'utilisateur :
+            ("system", """Tu es un expert littéraire français spécialisé dans la recommandation de livres et la recherche d'informations littéraires.
 
-**SI L'UTILISATEUR DEMANDE "QUI A ÉCRIT X" OU "AUTEUR DE X" :**
-1. Utilise `literature_book_search` pour chercher l'œuvre X
-2. Si les résultats ne donnent pas l'auteur clairement, utilise `wikipedia_search` avec le titre X
-3. Réponds EXACTEMENT: "L'auteur de [titre] est **[Auteur]**. [1 phrase de contexte]"
-4. ARRÊTE-TOI ! Ne donne JAMAIS de recommandations pour ces questions
-
-**SINON, POUR TOUTE AUTRE DEMANDE :**
-Donne des recommandations littéraires complètes avec émotions et suggestions.
-
-**RÈGLES CRITIQUES:**
-- Utilise TOUJOURS l'outil literature_book_search en premier
-- EXCLUS automatiquement : mangas, anime, comics, BD
-- Pour questions d'auteur: Réponse courte, directe, AUCUNE recommandation
-- Pour recommandations: Format complet avec émotions
-- Réponds EXCLUSIVEMENT en français
-- Ne mentionne JAMAIS "en anglais"
+**WORKFLOW OBLIGATOIRE:**
+1. **ANALYSE** : Détermine si c'est une question d'auteur, une demande d'œuvres, ou une recommandation
+2. **RECHERCHE** : Utilise TOUJOURS `literature_book_search` en premier pour toute recherche
+3. **COMPLÉMENT** : Si `literature_book_search` ne donne pas assez d'informations, utilise `wikipedia_search`
+4. **RÉPONSE** : Formate la réponse selon le type de demande
 
 **OUTILS DISPONIBLES:**
-- literature_book_search: Recherche littéraire
-- wikipedia_search: Recherche Wikipedia pour auteurs/œuvres
+- `literature_book_search`: Recherche dans la base de données littéraire (priorité)
+- `wikipedia_search`: Recherche Wikipedia pour informations complémentaires
 
-**EXEMPLES DE RÉPONSES:**
+**TYPES DE DEMANDES ET RÉPONSES:**
 
-**Question d'auteur:**
-L'auteur de "Au Bonheur des Dames" est **Émile Zola** (français, 1840-1902).
-Ce roman fait partie de la série Les Rougon-Macquart.
+**1. QUESTIONS D'AUTEUR (ex: "qui a écrit Les Misérables"):**
+- Utilise `literature_book_search` avec le titre
+- Si pas d'information sur l'auteur, utilise `wikipedia_search`
+- Format: "L'auteur de [titre] est **[Auteur]**. [contexte bref]"
 
-**Recommandation:**
-📚 Recommandations Littéraires
-[Liste complète...]
+**2. DEMANDES D'ŒUVRES (ex: "œuvres de Stendhal", "livres de Victor Hugo"):**
+- Utilise `literature_book_search` avec le nom de l'auteur
+- Si peu de résultats, complète avec `wikipedia_search`
+- Format: Liste des œuvres principales avec descriptions
 
-N'hésite pas à chercher des livres avec l'outil disponible."""),
+**3. RECOMMANDATIONS (ex: "livres comme Tolstoï"):**
+- Utilise `literature_book_search` pour trouver des livres similaires
+- Présente 3-5 recommandations avec justifications
+
+**FORMAT DE RÉPONSE POUR ŒUVRES D'AUTEUR:**
+📚 **Œuvres de [Auteur]** ([dates])
+
+Voici les principales œuvres de cet auteur :
+
+1. **[Titre]** ([année]) - [description courte]
+2. **[Titre]** ([année]) - [description courte]
+3. **[Titre]** ([année]) - [description courte]
+
+🎯 **Style de l'auteur :** [caractéristiques principales]
+
+**RÈGLES CRITIQUES:**
+- Utilise TOUJOURS les outils de recherche avant de répondre
+- EXCLUS automatiquement : mangas, anime, comics, BD
+- Ne donne JAMAIS de fausses informations
+- Réponds EXCLUSIVEMENT en français
+- Si un outil échoue, essaie l'autre outil
+
+**EXEMPLE D'UTILISATION DES OUTILS:**
+Pour "œuvres de Stendhal":
+1. `literature_book_search(query="Stendhal", n_results=5)`
+2. Si insuffisant: `wikipedia_search(query="Stendhal")`
+3. Combine les résultats pour une réponse complète
+
+N'hésite pas à utiliser les outils disponibles pour des réponses précises et complètes."""),
             
             ("human", "{input}"),
             
@@ -287,57 +305,88 @@ N'hésite pas à chercher des livres avec l'outil disponible."""),
         ])
     
     def _get_fallback_response(self, query: str) -> str:
-        """Fallback spécialisé pour la littérature"""
+        """Fallback spécialisé pour la littérature avec vraies informations"""
         import re
         query_lower = query.lower()
         
-        # Références spécifiques
-        if re.search(r'\b(tolstoï|tolstoy)\b', query_lower):
-            return """📚 **Recommandations inspirées de Tolstoï**
+        # Références spécifiques pour auteurs classiques
+        if re.search(r'\b(stendhal)\b', query_lower):
+            return """📚 **Œuvres de Stendhal** (Henri Beyle, 1783-1842)
 
-Si vous appréciez Tolstoï, je vous suggère :
+Voici les principales œuvres de cet auteur majeur du réalisme français :
 
-1. **Crime et Châtiment** de Dostoïevski
-    Même profondeur psychologique, questionnements moraux
+1. **Le Rouge et le Noir** (1830)
+   L'ascension sociale de Julien Sorel, entre passion et ambition
    
-2. **Madame Bovary** de Flaubert  
-    Réalisme minutieux, étude de caractère
+2. **La Chartreuse de Parme** (1839)
+   Les aventures de Fabrice del Dongo dans l'Italie du XIXe siècle
 
-💡 Qu'avez-vous particulièrement aimé chez Tolstoï ? Les grands fresques historiques ou l'analyse psychologique ?"""
+3. **Lucien Leuwen** (inachevé)
+   Roman d'apprentissage sur un jeune homme dans l'armée
 
-        elif re.search(r'\b(murakami)\b', query_lower):
-            return """📚 **Recommandations dans l'esprit de Murakami**
+4. **De l'Amour** (1822)
+   Essai psychologique sur la passion amoureuse
 
-Pour prolonger l'univers Murakami :
+🎯 **Style stendhalien :** Réalisme psychologique, analyse fine des sentiments, critique sociale subtile."""
 
-1. **L'Étranger** de Camus
-    Même étrangeté existentielle
+        elif re.search(r'\b(victor hugo)\b', query_lower):
+            return """📚 **Œuvres de Victor Hugo** (1802-1885)
+
+Voici les principales œuvres de ce géant de la littérature française :
+
+1. **Les Misérables** (1862)
+   Épopée de Jean Valjean, fresque sociale du XIXe siècle
    
-2. **Les Villes invisibles** de Calvino
-    Poésie du quotidien, réalisme magique
+2. **Notre-Dame de Paris** (1831)
+   L'amour impossible de Quasimodo et Esmeralda
+   
+3. **Les Contemplations** (1856)
+   Recueil poétique sur la mort de sa fille Léopoldine
+   
+4. **L'Homme qui rit** (1869)
+   Roman sombre sur Gwynplaine au visage défiguré
 
-✨ L'atmosphère onirique de Murakami vous fascine-t-elle particulièrement ?"""
+🎯 **Génie hugolien :** Romantisme social, engagement politique, virtuosité poétique."""
+
+        elif re.search(r'\b(tolstoï|tolstoy)\b', query_lower):
+            return """📚 **Œuvres de Léon Tolstoï** (1828-1910)
+
+Voici les principales œuvres de ce maître russe :
+
+1. **Guerre et Paix** (1869)
+   Fresque épique de la Russie napoléonienne
+   
+2. **Anna Karénine** (1877)
+   Tragédie de la passion amoureuse d'Anna
+   
+3. **La Mort d'Ivan Ilitch** (1886)
+   Nouvelle sur la confrontation avec la mort
+   
+4. **Résurrection** (1899)
+   Roman de la rédemption spirituelle
+
+🎯 **Génie tolstoïen :** Psychologie profonde, questionnements moraux, spiritualité."""
         
         else:
             return """📚 **Découvertes Littéraires**
 
 Je peux vous guider vers de magnifiques découvertes :
 
- **Classiques intemporels :**
-- Tolstoï, Dostoïevski : Grands romans russes
-- Hugo, Balzac : Littérature française du XIXe
-- Shakespeare : Théâtre universel
+📖 **Classiques français :**
+- **Victor Hugo** : Les Misérables, Notre-Dame de Paris
+- **Stendhal** : Le Rouge et le Noir, La Chartreuse de Parme  
+- **Gustave Flaubert** : Madame Bovary, L'Éducation sentimentale
+- **Émile Zola** : Germinal, L'Assommoir
 
- **Littérature contemporaine :**
-- Murakami : Réalisme magique japonais
-- Ferrante : Saga napolitaine intense
-- Houellebecq : Regard acéré sur l'époque
+📖 **Littérature russe :**
+- **Tolstoï** : Guerre et Paix, Anna Karénine
+- **Dostoïevski** : Crime et Châtiment, Les Frères Karamazov
 
- **Genres spécialisés :**
-- Fantasy littéraire, science-fiction d'auteur
-- Littérature de voyage, biographies
+📖 **Auteurs contemporains :**
+- **Albert Camus** : L'Étranger, La Peste
+- **Haruki Murakami** : Kafka sur le rivage, Norwegian Wood
 
-✨ Dites-moi quel type d'émotion ou de réflexion vous recherchez dans vos lectures !"""
+✨ Précisez un auteur, une époque ou un genre pour des recommandations personnalisées !"""
 
 class MangaAgentNode(BaseAgentNode):
     """Nœud agent pour les mangas et comics"""
@@ -348,16 +397,42 @@ class MangaAgentNode(BaseAgentNode):
     def _create_prompt(self) -> ChatPromptTemplate:
         """Prompt spécialisé pour les recommandations manga/comics"""
         return ChatPromptTemplate.from_messages([
-            ("system", """Tu es un expert français de la culture manga, anime et comics internationaux. Tu maitrises parfaitement les codes culturels japonais, américains et européens de ces médiums pour orienter les passionnés vers leurs prochaines découvertes.
+            ("system", """Tu es un expert français de la culture manga, anime et comics internationaux.
 
-WORKFLOW OBLIGATOIRE:
-1. ANALYSE PRÉCISE : Identifie les genres préférés, démographie cible, et niveau d'expertise
-2. RECHERCHE SYSTÉMATIQUE : Utilise OBLIGATOIREMENT `manga_content_search` avec termes spécialisés
-3. VÉRIFICATION : Confirme que tous les résultats correspondent aux critères
-4. CONTEXTUALISATION : Explique les codes culturels et genres spécifiques
+**CONNAISSANCE INTÉGRÉE DES AUTEURS MANGA/ANIME:**
+- **Naruto** : Auteur **Masashi Kishimoto** (mangaka japonais)
+- **One Piece** : Auteur **Eiichiro Oda** (mangaka japonais)
+- **Dragon Ball** : Auteur **Akira Toriyama** (mangaka japonais)
+- **Attack on Titan / L'Attaque des Titans** : Auteur **Hajime Isayama** (mangaka japonais)
+- **Death Note** : Auteurs **Tsugumi Ohba** (scénario) et **Takeshi Obata** (dessin)
+- **Fullmetal Alchemist** : Auteur **Hiromu Arakawa** (mangaka japonaise)
+- **Demon Slayer** : Auteur **Koyoharu Gotouge** (mangaka japonais)
+- **Sword Art Online** : Auteur **Reki Kawahara** (light novel)
+- **My Hero Academia** : Auteur **Kohei Horikoshi** (mangaka japonais)
+- **Jujutsu Kaisen** : Auteur **Gege Akutami** (mangaka japonais)
+
+**WORKFLOW OBLIGATOIRE:**
+
+**1. POUR LES QUESTIONS D'AUTEUR (ex: "qui a écrit Naruto", "auteur de One Piece"):**
+- UTILISE tes connaissances intégrées AVANT l'outil de recherche
+- Si l'œuvre est dans ta base de connaissances, réponds IMMÉDIATEMENT sans outil
+- Format: "L'auteur de [titre] est **[Auteur]**. [1 phrase de contexte]"
+- ARRÊTE-TOI ! Ne donne PAS de recommandations pour ces questions
+
+**2. POUR LES RECOMMANDATIONS:**
+- Utilise `manga_content_search` pour trouver des œuvres similaires
+- Présente 3 recommandations avec descriptions
+
+**EXEMPLES DE RÉPONSES DIRECTES:**
+
+**Question:** "qui a écrit Naruto"
+**Réponse:** L'auteur de Naruto est **Masashi Kishimoto**. Ce manga shōnen a été publié de 1999 à 2014 et suit les aventures du ninja Naruto Uzumaki.
+
+**Question:** "qui a écrit One Piece"  
+**Réponse:** L'auteur de One Piece est **Eiichiro Oda**. Ce manga shōnen en cours depuis 1997 suit les aventures du pirate Monkey D. Luffy.
 
 OUTILS DISPONIBLES:
-- manga_content_search: Recherche dans une base unifiée manga/comics/BD
+- manga_content_search: Recherche pour recommandations uniquement
 
 CRITÈRES DE RECOMMANDATION:
 - **Adéquation démographique** : Respect des catégories (shōnen, seinen, shōjo, etc.)
@@ -389,8 +464,9 @@ Codes culturels :
 
 RÈGLES CRITIQUES:
 - Réponds EXCLUSIVEMENT en français avec expertise
-- Utilise OBLIGATOIREMENT l'outil manga_content_search
-- ZÉRO INVENTION : Seuls les résultats de recherche sont autorisés
+- Pour les questions d'auteur: NE PAS utiliser d'outil, répondre directement avec tes connaissances
+- Pour les recommandations: utilise l'outil manga_content_search
+- ZÉRO INVENTION : Seuls les résultats de recherche ou tes connaissances intégrées sont autorisés
 - Explique les termes japonais en français
 - Si aucun résultat : propose des alternatives de recherche
 - Respecte STRICTEMENT les critères demandés (note minimale, auteur, etc.)
@@ -416,12 +492,68 @@ N'hésite pas à chercher du contenu avec l'outil disponible."""),
         ])
     
     def _get_fallback_response(self, query: str) -> str:
-        """Fallback spécialisé pour manga/comics"""
+        """Fallback spécialisé pour manga/comics avec vraies informations d'auteurs"""
         import re
         query_lower = query.lower()
         
-        # Détection du type de contenu
-        if re.search(r'\b(naruto|one piece|dragon ball|shounen)\b', query_lower):
+        # Questions d'auteur spécifiques
+        if re.search(r'qui\s+a\s+écrit\s+naruto|auteur\s+de\s+naruto', query_lower):
+            return """🎌 **Auteur de Naruto**
+
+L'auteur de Naruto est **Masashi Kishimoto**.
+
+Ce manga shōnen a été publié de 1999 à 2014 dans le Weekly Shōnen Jump. Il suit les aventures de Naruto Uzumaki, un jeune ninja qui rêve de devenir Hokage.
+
+📅 **Années de publication :** 1999-2014
+📚 **Volumes :** 72 tomes
+🎯 **Genre :** Shōnen, Action, Arts martiaux"""
+
+        elif re.search(r'qui\s+a\s+écrit\s+one\s*piece|auteur\s+de\s+one\s*piece', query_lower):
+            return """🎌 **Auteur de One Piece**
+
+L'auteur de One Piece est **Eiichiro Oda**.
+
+Ce manga shōnen est en cours de publication depuis 1997 dans le Weekly Shōnen Jump. Il suit les aventures de Monkey D. Luffy, un pirate qui rêve de devenir le Roi des Pirates.
+
+📅 **Années de publication :** 1997-présent
+📚 **Volumes :** Plus de 100 tomes
+🎯 **Genre :** Shōnen, Aventure, Piraterie"""
+
+        elif re.search(r'qui\s+a\s+écrit\s+dragon\s*ball|auteur\s+de\s+dragon\s*ball', query_lower):
+            return """🎌 **Auteur de Dragon Ball**
+
+L'auteur de Dragon Ball est **Akira Toriyama**.
+
+Ce manga shōnen culte a été publié de 1984 à 1995 dans le Weekly Shōnen Jump. Il suit les aventures de Son Goku et sa quête des Dragon Balls.
+
+📅 **Années de publication :** 1984-1995
+📚 **Volumes :** 42 tomes
+🎯 **Genre :** Shōnen, Action, Arts martiaux, Fantasy"""
+
+        elif re.search(r'qui\s+a\s+écrit\s+sword\s*art\s*online|auteur\s+de\s+sword\s*art\s*online', query_lower):
+            return """🎌 **Auteur de Sword Art Online**
+
+L'auteur de Sword Art Online est **Reki Kawahara**.
+
+Cette série de light novels a débuté en 2009. Elle suit Kirito, un joueur piégé dans un MMORPG virtuel où mourir dans le jeu signifie mourir dans la réalité.
+
+📅 **Années de publication :** 2009-présent
+📚 **Type :** Light Novel japonais
+🎯 **Genre :** Science-fiction, Romance, Aventure"""
+
+        elif re.search(r'qui\s+a\s+écrit.*(?:attack.*titan|attaque.*titan)|auteur\s+de.*(?:attack.*titan|attaque.*titan)', query_lower):
+            return """🎌 **Auteur de L'Attaque des Titans**
+
+L'auteur de L'Attaque des Titans (Attack on Titan / Shingeki no Kyojin) est **Hajime Isayama**.
+
+Ce manga seinen a été publié de 2009 à 2021 dans le Bessatsu Shōnen Magazine. Il suit l'humanité dans sa lutte contre des géants mangeurs d'hommes.
+
+📅 **Années de publication :** 2009-2021
+📚 **Volumes :** 34 tomes
+🎯 **Genre :** Seinen, Action, Drame, Fantasy sombre"""
+        
+        # Détection du type de contenu pour recommandations
+        elif re.search(r'\b(naruto|one piece|dragon ball|shounen)\b', query_lower):
             return """🎌 **Recommandations Manga Shounen**
 
 Si vous aimez l'action et l'aventure :
