@@ -13,6 +13,8 @@ from .models import ConversationHistory, Message
 from .serializers import MessageSerializer
 import logging
 import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Import du nouveau système LangChain
 from agents.langchain_agents.django_integration import (
@@ -572,3 +574,143 @@ class LangChainRouterChatView(APIView):
                     'error': str(e)
                 }
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class DualCoordinatorChatView(APIView):
+    """Vue pour chat splité entre coordinateurs LangChain et Gemma"""
+    
+    permission_classes = []
+    
+    def post(self, request):
+        message = request.data.get('message')
+        if not message:
+            return Response({
+                'error': 'Message is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Utilisateur demo pour les tests
+        from apps.accounts.models import User
+        demo_user, _ = User.objects.get_or_create(
+            email='demo@example.com',
+            defaults={'username': 'demo', 'first_name': 'Demo', 'last_name': 'User'}
+        )
+        
+        try:
+            start_time = time.time()
+            
+            # 🚀 APPELS PARALLÈLES SIMULTANÉS
+            def call_langchain():
+                try:
+                    raw = route_query(message, demo_user.id)
+                    return f"🦙 **LangChain Coordinateur**\n\n{raw}"
+                except Exception as e:
+                    logger.error(f"Erreur LangChain: {e}")
+                    return f"🦙 **LangChain Coordinateur**\n\n❌ Système temporairement indisponible"
+            
+            def call_gemma():
+                try:
+                    from agents.simple_agents import SimpleAgentManager
+                    agent_manager = SimpleAgentManager()
+                    raw = agent_manager.route_query(message)
+                    return f"🤖 **Gemma Coordinateur**\n\n{raw}"
+                except Exception as e:
+                    logger.error(f"Erreur Gemma: {e}")
+                    return f"🤖 **Gemma Coordinateur**\n\n❌ Erreur: {str(e)}"
+            
+            # Exécution simultanée avec ThreadPoolExecutor et timeout
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                # Lancer les deux appels en parallèle
+                langchain_future = executor.submit(call_langchain)
+                gemma_future = executor.submit(call_gemma)
+                
+                # Attendre les deux résultats avec timeout de 60s max
+                try:
+                    langchain_response = langchain_future.result(timeout=60)
+                except Exception as e:
+                    logger.error(f"Timeout ou erreur LangChain: {e}")
+                    langchain_response = "🦙 **LangChain Coordinateur**\n\n❌ Timeout ou erreur"
+                
+                try:
+                    gemma_response = gemma_future.result(timeout=60)
+                except Exception as e:
+                    logger.error(f"Timeout ou erreur Gemma: {e}")
+                    gemma_response = "🤖 **Gemma Coordinateur**\n\n❌ Timeout ou erreur"
+            
+            processing_time = time.time() - start_time
+            
+            # Créer des réponses factices pour l'instant
+            return Response({
+                'dual_mode': True,
+                'processing_time': processing_time,
+                'langchain_response': {
+                    'conversation_id': 1,
+                    'user_message': {'content': message},
+                    'agent_response': {'content': langchain_response},
+                    'system_info': {
+                        'using_langchain': True,
+                        'agent_type': 'coordinator_langchain',
+                        'processing_time': processing_time
+                    }
+                },
+                'gemma_response': {
+                    'conversation_id': 2, 
+                    'user_message': {'content': message},
+                    'agent_response': {'content': gemma_response},
+                    'system_info': {
+                        'using_gemma': True,
+                        'agent_type': 'coordinator_gemma',
+                        'processing_time': processing_time
+                    }
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Erreur Dual Coordinator: {e}")
+            
+            return Response({
+                'error': f'Dual coordinator error: {str(e)}',
+                'system_info': {
+                    'dual_mode': True,
+                    'error': str(e)
+                }
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _get_dual_responses_sync(self, message: str, user_id: int):
+        """Appelle les deux coordinateurs en parallèle (version synchrone)"""
+        
+        # Pour l'instant, version séquentielle pour éviter les problèmes d'asyncio
+        langchain_response = self._get_langchain_coordinator_response(message, user_id)
+        gemma_response = self._get_gemma_coordinator_response(message, user_id)
+        
+        return langchain_response, gemma_response
+    
+    def _get_langchain_coordinator_response(self, message: str, user_id: int) -> str:
+        """Obtient la réponse du coordinateur LangChain (système avancé)"""
+        try:
+            # Utiliser le vrai système LangChain qui route vers ses agents
+            response = route_query(message, user_id)
+            return f"🦙 **LangChain Coordinateur**\n\n{response}"
+        except Exception as e:
+            logger.error(f"Erreur coordinateur LangChain: {e}")
+            return f"❌ Erreur LangChain: {str(e)}"
+    
+    def _get_gemma_coordinator_response(self, message: str, user_id: int) -> str:
+        """Obtient la réponse du coordinateur Gemma (système Ollama)"""
+        try:
+            # Utiliser le système Gemma/Ollama qui route vers ses agents
+            from agents.ollama_gemma_manager import GemmaAgentManager
+            gemma_manager = GemmaAgentManager()
+            response = gemma_manager.route_query(message, user_id)
+            return f"🤖 **Gemma Coordinateur**\n\n{response}"
+        except Exception as e:
+            logger.error(f"Erreur coordinateur Gemma: {e}")
+            # Fallback vers SimpleAgentManager si Gemma pose problème
+            try:
+                from agents.simple_agents import SimpleAgentManager
+                agent_manager = SimpleAgentManager()
+                response = agent_manager.route_query(message)
+                return f"🤖 **Gemma Coordinateur (Fallback)**\n\n{response}"
+            except Exception as e2:
+                logger.error(f"Erreur fallback: {e2}")
+                return f"❌ Erreur Gemma: {str(e)}"

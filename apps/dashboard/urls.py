@@ -6,6 +6,7 @@ app_name = 'dashboard'
 urlpatterns = [
     path('', views.DashboardView.as_view(), name='home'),
     path('chat/', views.ChatView.as_view(), name='chat'),
+    path('dual-chat/', views.DualChatView.as_view(), name='dual_chat'),
     path('api/dashboard/', views.DashboardAPIView.as_view(), name='dashboard'),
     path('api/stats/', views.UserStatsView.as_view(), name='user_stats'),
 ]

@@ -33,6 +33,13 @@ class ChatView(TemplateView):
     template_name = 'chat/chat.html'
 
 
+class DualChatView(TemplateView):
+    """
+    Interface de chat dual pour comparaison LangChain vs Gemma
+    """
+    template_name = 'chat/dual_chat.html'
+
+
 class DashboardAPIView(APIView):
     permission_classes = [IsAuthenticated]
     

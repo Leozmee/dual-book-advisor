@@ -42,3 +42,4 @@ LangChainMangaAgentChatView = LazyViewWrapper('apps.chat.views_langchain.LangCha
 LangChainRouterChatView = LazyViewWrapper('apps.chat.views_langchain.LangChainRouterChatView')
 LangChainSystemStatusView = LazyViewWrapper('apps.chat.views_langchain.LangChainSystemStatusView')
 HybridTechAgentChatView = LazyViewWrapper('apps.chat.views_langchain.HybridTechAgentChatView')
+DualCoordinatorChatView = LazyViewWrapper('apps.chat.views_langchain.DualCoordinatorChatView')

@@ -641,7 +641,7 @@ class GemmaAgentManager:
             context += f"   Description: {content['description'][:150]}...\n\n"
         return context
     
-    def route_query(self, query: str) -> str:
+    def route_query(self, query: str, user_id: int = 1) -> str:
         """Route une requête vers l'agent approprié avec détection factuelle"""
         query_lower = query.lower()
         
@@ -677,13 +677,13 @@ class GemmaAgentManager:
         
         # Si c'est de la littérature classique, ne pas aller vers manga/comics
         if classic_score > 0:
-            return self.get_literature_recommendations(query)
+            return self.get_literature_recommendations(query, user_id)
         elif manga_score > 0:
-            return self.get_manga_recommendations(query)
+            return self.get_manga_recommendations(query, user_id)
         elif tech_score > 0:
-            return self.get_tech_recommendations(query)
+            return self.get_tech_recommendations(query, user_id)
         else:
-            return self.get_literature_recommendations(query)
+            return self.get_literature_recommendations(query, user_id)
     
     def _detect_factual_query(self, query_lower: str) -> bool:
         """Détecte si c'est une question factuelle"""

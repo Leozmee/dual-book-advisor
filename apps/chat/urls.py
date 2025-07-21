@@ -7,7 +7,8 @@ from .lazy_views import (
     LlamaResetStatsView, LlamaDashboardView,
     LangChainTechAgentChatView, LangChainLiteratureAgentChatView,
     LangChainMangaAgentChatView, LangChainRouterChatView,
-    LangChainSystemStatusView, HybridTechAgentChatView
+    LangChainSystemStatusView, HybridTechAgentChatView,
+    DualCoordinatorChatView
 )
 
 app_name = 'chat'
@@ -38,6 +39,9 @@ urlpatterns = [
     
     # URLs hybrides pour migration progressive
     path('hybrid/tech/', HybridTechAgentChatView.as_view(), name='hybrid_tech_agent'),
+    
+    # URL pour le chat dual coordinateurs (LangChain + Gemma)
+    path('dual-coordinator/', DualCoordinatorChatView.as_view(), name='dual_coordinator_chat'),
     
     # URLs pour la gestion des modèles (ancienne version multi-modèles)
     path('models/status/', views_model_management.ModelStatusView.as_view(), name='model_status'),

@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+
+{% block title %}Chat Dual Coordinateur - Dual Book Advisor{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-full mx-auto px-6 py-8" x-data="dualChatApp()">
+        
+        <!-- Header -->
+        <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl border border-gray-200/50 p-6 mb-6 shadow-xl">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">🥊 Chat Dual Coordinateur</h1>
+                <p class="text-gray-600">Comparez les réponses de LangChain et Gemma en temps réel</p>
+                <div class="flex justify-center items-center gap-4 mt-4">
+                    <div class="flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-lg">
+                        <span class="text-2xl">🦙</span>
+                        <span class="font-semibold text-blue-800">LangChain</span>
+                    </div>
+                    <span class="text-gray-400 text-xl">VS</span>
+                    <div class="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-lg">
+                        <span class="text-2xl">🤖</span>
+                        <span class="font-semibold text-purple-800">Gemma</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Container Split -->
+        <div class="flex gap-6 mb-6">
+            <!-- LangChain Side -->
+            <div class="flex-1">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-2xl">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <span class="text-2xl">🦙</span>
+                        LangChain Coordinateur
+                    </h2>
+                </div>
+                <div class="bg-white border-l border-r border-b border-gray-200 h-96 overflow-y-auto rounded-b-2xl" id="langchain-messages">
+                    <div class="p-4 text-center text-gray-500 h-full flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">🦙</div>
+                            <div>En attente de votre première question...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gemma Side -->
+            <div class="flex-1">
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-t-2xl">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <span class="text-2xl">🤖</span>
+                        Gemma Coordinateur
+                    </h2>
+                </div>
+                <div class="bg-white border-l border-r border-b border-gray-200 h-96 overflow-y-auto rounded-b-2xl" id="gemma-messages">
+                    <div class="p-4 text-center text-gray-500 h-full flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">🤖</div>
+                            <div>En attente de votre première question...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xl p-6">
+            <form @submit.prevent="sendMessage">
+                <div class="flex gap-4">
+                    <input type="text" 
+                           x-model="message" 
+                           placeholder="Posez votre question aux deux coordinateurs..."
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg"
+                           :disabled="isLoading">
+                    <button type="submit" 
+                            :disabled="!message.trim() || isLoading"
+                            class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-8 py-3 rounded-xl hover:from-purple-600 hover:to-blue-700 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!isLoading">Envoyer</span>
+                        <span x-show="isLoading" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Traitement...
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Like System -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-xl p-6 mt-6" x-show="lastComparison" x-transition>
+            <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">⚡ Laquelle préférez-vous ?</h3>
+            <div class="flex gap-4 justify-center">
+                <button @click="likeResponse('langchain')" 
+                        :class="selectedPreference === 'langchain' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-700'"
+                        class="flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300">
+                    <span class="text-xl">👍</span>
+                    <span class="text-lg">🦙</span>
+                    <span class="font-semibold">LangChain</span>
+                </button>
+                <button @click="likeResponse('gemma')" 
+                        :class="selectedPreference === 'gemma' ? 'bg-purple-500 text-white' : 'bg-gray-100 hover:bg-purple-100 text-gray-700'"
+                        class="flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300">
+                    <span class="text-xl">👍</span>
+                    <span class="text-lg">🤖</span>
+                    <span class="font-semibold">Gemma</span>
+                </button>
+            </div>
+            <div class="text-center mt-3 text-sm text-gray-500">
+                Votre préférence nous aide à améliorer les systèmes
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function dualChatApp() {
+    return {
+        message: '',
+        isLoading: false,
+        lastComparison: null,
+        selectedPreference: null,
+
+        async sendMessage() {
+            if (!this.message.trim() || this.isLoading) return;
+            
+            const userMessage = this.message;
+            this.message = '';
+            this.isLoading = true;
+            this.selectedPreference = null;
+
+            // Afficher le message utilisateur des deux côtés
+            this.addUserMessage(userMessage);
+
+            try {
+                const response = await fetch('/api/chat/dual-coordinator/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        message: userMessage
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.dual_mode) {
+                    // Afficher les deux réponses
+                    this.addAgentMessage('langchain', data.langchain_response.agent_response.content, data.processing_time);
+                    this.addAgentMessage('gemma', data.gemma_response.agent_response.content, data.processing_time);
+                    
+                    // Activer le système de like
+                    this.lastComparison = {
+                        langchain: data.langchain_response,
+                        gemma: data.gemma_response
+                    };
+                } else {
+                    console.error('Erreur:', data.error);
+                }
+
+            } catch (error) {
+                console.error('Erreur de réseau:', error);
+                this.addErrorMessage('Erreur de connexion');
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        addUserMessage(content) {
+            const messageHtml = `
+                <div class="p-4 border-b border-gray-100">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">👤</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900 text-sm mb-1">Vous</div>
+                            <div class="text-gray-800">${content}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Vider le contenu initial si c'est le premier message
+            const langchainContainer = document.getElementById('langchain-messages');
+            const gemmaContainer = document.getElementById('gemma-messages');
+            
+            if (langchainContainer.querySelector('.text-center')) {
+                langchainContainer.innerHTML = '';
+                gemmaContainer.innerHTML = '';
+            }
+            
+            langchainContainer.innerHTML += messageHtml;
+            gemmaContainer.innerHTML += messageHtml;
+            
+            this.scrollToBottom('langchain-messages');
+            this.scrollToBottom('gemma-messages');
+        },
+
+        addAgentMessage(system, content, processingTime) {
+            const isLangchain = system === 'langchain';
+            const systemName = isLangchain ? '🦙 LangChain' : '🤖 Gemma';
+            const bgColor = isLangchain ? 'bg-blue-500' : 'bg-purple-500';
+            
+            const messageHtml = `
+                <div class="p-4 border-b border-gray-100">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 ${bgColor} rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm">${isLangchain ? '🦙' : '🤖'}</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900 text-sm mb-1">${systemName}</div>
+                            <div class="text-gray-800 whitespace-pre-wrap">${content}</div>
+                            <div class="text-xs text-gray-500 mt-2">⚡ ${processingTime?.toFixed(2)}s</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById(`${system}-messages`).innerHTML += messageHtml;
+            this.scrollToBottom(`${system}-messages`);
+        },
+
+        addErrorMessage(error) {
+            const messageHtml = `
+                <div class="p-4 border-b border-gray-100">
+                    <div class="text-red-600">❌ ${error}</div>
+                </div>
+            `;
+            
+            document.getElementById('langchain-messages').innerHTML += messageHtml;
+            document.getElementById('gemma-messages').innerHTML += messageHtml;
+        },
+
+        scrollToBottom(elementId) {
+            const element = document.getElementById(elementId);
+            element.scrollTop = element.scrollHeight;
+        },
+
+        likeResponse(system) {
+            this.selectedPreference = system;
+            
+            // Animation de feedback
+            const button = event.target.closest('button');
+            button.classList.add('animate-pulse');
+            setTimeout(() => {
+                button.classList.remove('animate-pulse');
+            }, 1000);
+
+            // Ici vous pouvez ajouter une logique pour sauvegarder la préférence
+            console.log(`Utilisateur préfère: ${system}`);
+        }
+    }
+}
+
+// Auto-detection du mode dual coordinateur depuis l'URL
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('agent') === 'dual-coordinator') {
+        // Le template dual est déjà chargé
+    }
+});
+</script>
+
+<!-- Token CSRF -->
+{% csrf_token %}
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+{% endblock %}
