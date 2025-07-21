@@ -363,8 +363,29 @@ Analyse la requête et fournis une classification précise avec justification.
                 "keywords": [kw for kw in self.tech_keywords if kw in query_lower]
             }
         
-        # Détection spéciale pour questions d'auteur classique
+        # Détection spéciale pour questions d'auteur classique (priorité élevée)
         if self._is_author_question(query_lower):
+            # Vérifier si c'est un titre littéraire classique
+            classic_titles = [
+                "les misérables", "l'homme qui rit", "notre-dame de paris", "madame bovary", 
+                "l'étranger", "la peste", "le rouge et le noir", "guerre et paix", 
+                "anna karénine", "crime et châtiment", "les frères karamazov",
+                "germinal", "l'assommoir", "la chartreuse de parme", "les fleurs du mal",
+                "spleen de paris", "alcools", "apollinaire", "baudelaire", "verlaine",
+                "rimbaud", "mallarme", "le spleen de paris", "petits poèmes en prose"
+            ]
+            
+            # Si c'est un titre classique connu, forcer littérature
+            for title in classic_titles:
+                if title in query_lower:
+                    return {
+                        "agent_type": "literature",
+                        "confidence": 0.99,
+                        "reasoning": f"Question d'auteur sur œuvre littéraire classique: {title}",
+                        "keywords": ["qui a écrit", "auteur", title]
+                    }
+            
+            # Sinon, question d'auteur générale
             return {
                 "agent_type": "literature",
                 "confidence": 0.95,

@@ -154,6 +154,9 @@ RÈGLES STRICTES:
 - Maximum 5 recommandations par réponse
 - Si aucun résultat pertinent : explique pourquoi et propose des alternatives
 - JAMAIS d'invention de titres ou d'auteurs
+- ⚠️ **NE JAMAIS EXPOSER** les noms des outils ou détails techniques dans tes réponses
+- ⚠️ **NE JAMAIS DIRE** "En utilisant l'outil", "Je récupère les informations", "Erreur dans la réponse précédente"
+- ⚠️ **RÉPONSE NATURELLE UNIQUEMENT** : Présente les recommandations comme tes propres connaissances
 
 N'hésite pas à chercher des livres avec l'outil disponible."""),
             
@@ -319,6 +322,9 @@ Voici les principales œuvres de cet auteur :
 - Question "qui a écrit" / "auteur de" = RÉPONSE COURTE UNIQUEMENT
 - Pas de recommandations sur les questions précises d'auteur
 - Utilise Wikipedia EN PREMIER pour identifier les auteurs
+- ⚠️ **NE JAMAIS EXPOSER** les noms des outils ou détails techniques dans tes réponses
+- ⚠️ **NE JAMAIS DIRE** "En utilisant l'outil", "Je récupère les informations", "Il semble qu'il y ait eu une erreur"
+- ⚠️ **RÉPONSE NATURELLE UNIQUEMENT** : Réponds comme si tu connaissais directement l'information
 
 N'hésite pas à utiliser les outils disponibles pour des réponses précises et complètes."""),
             
@@ -491,6 +497,9 @@ RÈGLES CRITIQUES:
 - Pour les recommandations: utilise l'outil manga_content_search
 - ZÉRO INVENTION : Seuls les résultats de recherche ou tes connaissances intégrées sont autorisés
 - Explique les termes japonais en français
+- ⚠️ **NE JAMAIS EXPOSER** les noms des outils ou détails techniques dans tes réponses
+- ⚠️ **NE JAMAIS DIRE** "En utilisant l'outil", "Je récupère les informations", "Erreur dans la réponse précédente"
+- ⚠️ **RÉPONSE NATURELLE UNIQUEMENT** : Présente tes recommandations comme tes propres connaissances
 - Si aucun résultat : propose des alternatives de recherche
 - Respecte STRICTEMENT les critères demandés (note minimale, auteur, etc.)
 
