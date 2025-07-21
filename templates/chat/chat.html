@@ -59,7 +59,7 @@
                                     <span class="text-2xl">🖥️</span>
                                 </div>
                                 <div class="text-left">
-                                    <h3 class="font-semibold text-lg">🖥️ Agent Tech</h3>
+                                    <h3 class="font-semibold text-lg"> Agent Tech</h3>
                                     <p class="text-sm opacity-70 mt-1">Programming & technical books</p>
                                 </div>
                             </div>
@@ -73,7 +73,7 @@
                                     <span class="text-2xl">📚</span>
                                 </div>
                                 <div class="text-left">
-                                    <h3 class="font-semibold text-lg">📖 Agent littéraire</h3>
+                                    <h3 class="font-semibold text-lg"> Agent littéraire</h3>
                                     <p class="text-sm opacity-70 mt-1">Fiction, classics & poetry</p>
                                 </div>
                             </div>
@@ -87,7 +87,7 @@
                                     <span class="text-2xl">🎌</span>
                                 </div>
                                 <div class="text-left">
-                                    <h3 class="font-semibold text-lg">🎌 Agent BD/Manga</h3>
+                                    <h3 class="font-semibold text-lg"> Agent BD/Manga</h3>
                                     <p class="text-sm opacity-70 mt-1">Manga, anime & graphic novels</p>
                                 </div>
                             </div>
@@ -158,10 +158,10 @@
                 </div>
 
                 <!-- Chat Messages -->
-                <div class="bg-gradient-to-b from-white to-gray-50 rounded-2xl border border-gray-200/50 mb-8 overflow-hidden shadow-xl shadow-gray-300/20 backdrop-blur-sm" style="height: 600px;" x-show="selectedAgent">
+                <div class="bg-gradient-to-b from-slate-50 to-stone-50 rounded-2xl border border-gray-200/50 mb-8 overflow-hidden shadow-xl shadow-gray-300/20 backdrop-blur-sm" style="height: 600px;" x-show="selectedAgent">
                     <div class="h-full flex flex-col">
                         <!-- Chat Header -->
-                        <div class="p-6 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100/80 backdrop-blur-sm">
+                        <div class="p-6 border-b border-gray-200/50 bg-gradient-to-r from-slate-50 to-stone-50/80 backdrop-blur-sm">
                             <div class="flex items-center space-x-3">
                                 <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                                     <span class="text-white text-lg">🤖</span>
@@ -306,7 +306,8 @@
                                            hover:from-pink-600 hover:to-rose-700 
                                            disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed 
                                            transition-all duration-200 transform hover:scale-105 active:scale-95
-                                           shadow-lg hover:shadow-xl shadow-pink-500/25">
+                                           shadow-lg hover:shadow-xl 
+                                           enabled:shadow-pink-500/25 disabled:shadow-gray-500/25">
                                 <span x-show="!isLoading">Envoyer</span>
                                 <span x-show="isLoading" class="flex items-center space-x-2">
                                     <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
