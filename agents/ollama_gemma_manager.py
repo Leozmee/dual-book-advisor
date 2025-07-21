@@ -20,6 +20,16 @@ except ImportError as e:
     COVER_SERVICE_AVAILABLE = False
     logger.warning(f"⚠️ Cover Image Service non disponible dans Gemma Manager: {e}")
 
+# Import de Wikipedia
+try:
+    import wikipedia
+    wikipedia.set_lang("fr")
+    WIKIPEDIA_AVAILABLE = True
+    logger.info("✅ Wikipedia disponible dans Gemma Manager")
+except ImportError as e:
+    WIKIPEDIA_AVAILABLE = False
+    logger.warning(f"⚠️ Wikipedia non disponible dans Gemma Manager: {e}")
+
 
 class OllamaGemmaManager:
     """Gestionnaire pour Gemma-2-2b via Ollama"""
@@ -664,25 +674,24 @@ class GemmaAgentManager:
             'web', 'mobile', 'data science', 'machine learning', 'ai'
         ]
         
-        # Littérature classique (ne va PAS vers manga/comics)
-        classic_keywords = [
-            'jules verne', 'victor hugo', 'alexandre dumas', 'les enfants du capitaine grant',
-            'les misérables', 'notre-dame de paris', 'guerre et paix', 'anna karénine',
-            'shakespeare', 'hamlet', 'camus', 'l\'étranger'
+        # Détection intelligente de littérature vs manga/tech
+        # Utiliser des patterns plus généraux au lieu de listes hardcodées
+        literature_indicators = [
+            'roman', 'livre', 'littérature', 'auteur', 'écrivain', 'poète',
+            'œuvre', 'qui a écrit', 'auteur de'
         ]
         
         manga_score = sum(1 for keyword in manga_comics_keywords if keyword in query_lower)
         tech_score = sum(1 for keyword in tech_keywords if keyword in query_lower)
-        classic_score = sum(1 for keyword in classic_keywords if keyword in query_lower)
+        literature_score = sum(1 for keyword in literature_indicators if keyword in query_lower)
         
-        # Si c'est de la littérature classique, ne pas aller vers manga/comics
-        if classic_score > 0:
-            return self.get_literature_recommendations(query)
-        elif manga_score > 0:
+        # Routage intelligent basé sur les scores ET la détection factuelle
+        if manga_score > tech_score and manga_score > literature_score:
             return self.get_manga_recommendations(query)
-        elif tech_score > 0:
+        elif tech_score > literature_score and tech_score > manga_score:
             return self.get_tech_recommendations(query)
         else:
+            # Par défaut, littérature (gère aussi les questions factuelles via Wikipedia)
             return self.get_literature_recommendations(query)
     
     def _detect_factual_query(self, query_lower: str) -> bool:
@@ -694,12 +703,84 @@ class GemmaAgentManager:
         ]
         return any(pattern in query_lower for pattern in factual_patterns)
     
-    def _handle_factual_query_with_gemma(self, query: str) -> str:
-        """Gère les questions factuelles avec Gemma"""
+    def _search_wikipedia(self, query: str) -> Dict[str, str]:
+        """Recherche universelle sur Wikipedia"""
+        if not WIKIPEDIA_AVAILABLE:
+            return None
+            
         try:
-            # Essayer de trouver des informations dans le RAG littéraire
+            # Nettoyer la requête pour Wikipedia
+            clean_query = query.lower()
+            # Extraire le titre du livre si c'est une question d'auteur
+            if "qui a écrit" in clean_query or "auteur de" in clean_query:
+                # Extraire le titre entre guillemets ou après "auteur de"
+                import re
+                patterns = [
+                    r'qui\s+a\s+écrit\s+"([^"]+)"',
+                    r'qui\s+a\s+écrit\s+([^?]+)',
+                    r'auteur\s+de\s+"([^"]+)"',
+                    r'auteur\s+de\s+([^?]+)'
+                ]
+                
+                for pattern in patterns:
+                    match = re.search(pattern, clean_query)
+                    if match:
+                        title = match.group(1).strip()
+                        break
+                else:
+                    title = clean_query
+            else:
+                title = clean_query
+                
+            # Rechercher sur Wikipedia (français)
+            search_results = wikipedia.search(title, results=3)
+            if not search_results:
+                return None
+                
+            # Essayer le premier résultat
+            page = wikipedia.page(search_results[0])
+            
+            # Extraire les informations pertinentes
+            summary = page.summary[:300]
+            
+            # Essayer d'extraire l'auteur de la page
+            content = page.content[:1000].lower()
+            
+            # Patterns pour détecter l'auteur
+            author_patterns = [
+                r'(?:roman|livre|œuvre|novel|book)\s+(?:de|d\'|par|by)\s+([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ\s\-\'\.]+)',
+                r'(?:écrit|écrite|written)\s+par\s+([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ\s\-\'\.]+)',
+                r'([A-ZÀ-Ÿ][a-zA-ZÀ-ÿ\s\-\'\.]+)\s+(?:est|is)\s+(?:un|une|l\')?(?:auteur|écrivain|romancier)'
+            ]
+            
+            author = None
+            for pattern in author_patterns:
+                match = re.search(pattern, content)
+                if match:
+                    author = match.group(1).strip()
+                    # Nettoyer l'auteur (enlever les mots en trop)
+                    stop_words = ['le', 'la', 'les', 'un', 'une', 'des', 'du', 'de', 'est', 'dans', 'pour', 'avec']
+                    author_words = author.split()
+                    if author_words[-1].lower() in stop_words:
+                        author = ' '.join(author_words[:-1])
+                    break
+            
+            return {
+                'title': page.title,
+                'author': author,
+                'summary': summary,
+                'url': page.url
+            }
+            
+        except Exception as e:
+            logger.error(f"Erreur recherche Wikipedia: {e}")
+            return None
+
+    def _handle_factual_query_with_gemma(self, query: str) -> str:
+        """Gère les questions factuelles avec Gemma - VERSION UNIVERSELLE avec Wikipedia"""
+        try:
+            # 1. D'abord essayer le RAG littéraire
             if self.literature_rag:
-                # Extraire le titre du livre de la question
                 title = self._extract_book_title(query)
                 if title:
                     results = self.literature_rag.search_books(query=title, n_results=1)
@@ -713,33 +794,27 @@ Description: {book['description'][:200]}..."""
                         
                         return self.get_factual_response(query, book_info)
             
-            # Fallback pour "Les Enfants du Capitaine Grant" et autres classiques
-            if "les enfants du capitaine grant" in query.lower():
-                book_info = """Titre: Les Enfants du Capitaine Grant
-Auteur: Jules Verne
-Année de publication: 1867-1868
-Genre: Roman d'aventures
-Description: Roman d'aventures de Jules Verne où les enfants du capitaine Grant partent à la recherche de leur père disparu autour du monde."""
+            # 2. Ensuite essayer Wikipedia (UNIVERSEL)
+            wiki_result = self._search_wikipedia(query)
+            if wiki_result and wiki_result.get('author'):
+                
+                # Réponse courte et directe pour les questions d'auteur
+                if "qui a écrit" in query.lower() or "auteur de" in query.lower():
+                    return f"**{wiki_result['author']}** a écrit {wiki_result['title']}."
+                
+                # Réponse plus complète pour d'autres questions
+                book_info = f"""Titre: {wiki_result['title']}
+Auteur: {wiki_result['author']}
+Description: {wiki_result['summary']}"""
+                
                 return self.get_factual_response(query, book_info)
             
-            elif "les misérables" in query.lower():
-                book_info = """Titre: Les Misérables
-Auteur: Victor Hugo
-Année de publication: 1862
-Genre: Roman social
-Description: Œuvre majeure de Victor Hugo décrivant la vie des classes populaires en France au XIXe siècle."""
-                return self.get_factual_response(query, book_info)
+            # 3. Si Wikipedia ne trouve pas l'auteur, essayer une recherche générale
+            elif wiki_result:
+                return f"📚 J'ai trouvé des informations sur **{wiki_result['title']}** : {wiki_result['summary'][:150]}..."
             
-            elif "notre-dame de paris" in query.lower():
-                book_info = """Titre: Notre-Dame de Paris
-Auteur: Victor Hugo
-Année de publication: 1831
-Genre: Roman historique
-Description: Roman de Victor Hugo se déroulant au XVe siècle autour de la cathédrale Notre-Dame de Paris."""
-                return self.get_factual_response(query, book_info)
-            
-            # Si pas trouvé, réponse générale
-            return "📚 Je n'ai pas trouvé d'information spécifique sur cette question dans ma base de données."
+            # 4. Si rien n'est trouvé
+            return "📚 Je n'ai pas trouvé d'information spécifique sur cette question. Pouvez-vous reformuler ou préciser le titre de l'œuvre ?"
             
         except Exception as e:
             logger.error(f"Erreur gestion question factuelle: {e}")
