@@ -844,3 +844,19 @@ Description: {wiki_result['summary']}"""
             "literature_rag": "available" if self.literature_rag else "unavailable",
             "manga_rag": "available" if self.manga_rag else "unavailable"
         }
+    
+
+
+
+
+def get_best_model_for_task(self, agent_type: str = "general") -> str:
+    """🎯 Sélectionne automatiquement le meilleur modèle selon la tâche"""
+    # Recommandations spécialisées par domaine
+    task_preferences = {
+        'tech': ['mistral:7b', 'llama3.2:3b', 'gemma2:2b'],
+        'literature': ['llama3.2:3b', 'mistral:7b', 'gemma2:2b'],
+        'manga': ['llama3.2:3b', 'gemma2:2b', 'mistral:7b'],
+        'general': ['llama3.2:3b', 'mistral:7b', 'gemma2:2b']
+    }
+    # Retourne le premier modèle disponible pour le type d'agent
+    return task_preferences.get(agent_type, task_preferences['general'])[0]
