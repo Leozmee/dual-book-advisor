@@ -65,11 +65,11 @@ class ClassifierNode:
             'cobol', 'fortran', 'pascal', 'ada', 'perl', 'scala', 'kotlin',
             'swift', 'rust', 'c++', 'cpp', 'c', 'assembly', 'assembler',
             'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'sqlite',
-            'programming', 'programmation', 'développement', 'development',
-            'web', 'mobile', 'app', 'application', 'software', 'logiciel',
+            'programming', 'programmation', 'développement',
+            'mobile', 'application', 'logiciel',
             'machine learning', 'data science', 'ai', 'intelligence artificielle',
-            'algorithm', 'algorithme', 'code', 'coding', 'framework',
-            'database', 'base de données', 'api', 'backend', 'frontend',
+            'algorithm', 'algorithme', 'coding', 'framework',
+            'database', 'base de données', 'backend', 'frontend',
             'react', 'angular', 'vue', 'node', 'express', 'django', 'flask',
             'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'cloud',
             'git', 'github', 'gitlab', 'devops', 'ci/cd', 'agile', 'scrum'
@@ -350,15 +350,16 @@ Analyse la requête et fournis une classification précise avec justification.
                 "keywords": ["qui a écrit", "auteur", "manga", "anime"]
             }
         
-        # Détection technique
+        # Détection technique (seuil plus restrictif)
         tech_score = sum(1 for keyword in self.tech_keywords if keyword in query_lower)
         lit_score = sum(1 for keyword in self.literature_keywords if keyword in query_lower)
         
         # Vérification spéciale pour éviter les faux positifs techniques
-        if tech_score > 0 and not self._is_likely_literature_query(query_lower):
+        # Seuil augmenté à 2 mots-clés minimum et confiance réduite
+        if tech_score >= 2 and not self._is_likely_literature_query(query_lower):
             return {
                 "agent_type": "tech",
-                "confidence": min(0.8 + tech_score * 0.1, 1.0),
+                "confidence": min(0.7 + tech_score * 0.05, 1.0),
                 "reasoning": f"Mots-clés techniques détectés: {tech_score}",
                 "keywords": [kw for kw in self.tech_keywords if kw in query_lower]
             }
@@ -530,11 +531,15 @@ Analyse la requête et fournis une classification précise avec justification.
             if re.search(pattern, query_lower):
                 return False
         
+        # Indicateurs littéraires étendus (moins restrictifs)
         literary_indicators = [
             'madame bovary', 'les misérables', 'l\'étranger', 'la peste',
             'guerre et paix', 'anna karénine', 'crime et châtiment',
-            'roman', 'romans', 'œuvre', 'œuvres',
-            'auteur', 'écrivain', 'poète', 'littérature', 'classique'
+            'roman', 'romans', 'œuvre', 'œuvres', 'livre', 'livres',
+            'auteur', 'écrivain', 'poète', 'littérature', 'classique',
+            'recommande', 'suggestion', 'conseil', 'lecture',
+            'j\'ai aimé', 'j\'ai lu', 'j\'ai adoré', 'similaire',
+            'comme', 'dans le style', 'que lire', 'quoi lire'
         ]
         
         return any(indicator in query_lower for indicator in literary_indicators)
